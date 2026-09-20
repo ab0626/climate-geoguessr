@@ -117,4 +117,8 @@ summary:focus-visible, button:focus-visible, select:focus-visible, input:focus-v
   .arrow { justify-self: center; transform: rotate(90deg); }
   .facts li { grid-template-columns: 1fr auto; }
   .facts li > .muted { grid-column: 2; }
+  .card, .stage { min-width: 0; overflow-x: auto; }
+  .summary-stats { grid-template-columns: minmax(0, 1fr); }
+  .tbl td, .tbl th { white-space: normal; overflow-wrap: anywhere; }
+  .stack, .grid2 { min-width: 0; }
 }
