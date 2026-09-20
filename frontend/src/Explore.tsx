@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { CircleMarker, MapContainer, Polyline, TileLayer, Tooltip } from "react-leaflet";
 import { CartesianGrid, ResponsiveContainer, Scatter, ScatterChart, Tooltip as RTooltip, XAxis, YAxis, ZAxis } from "recharts";
-import { api, CLUSTER_COLORS, fmt, fmtBytes, fmtInt, ordinal, type Cluster, type Diagnostics, type Location, type MapLocation, type Pipeline } from "./api";
+import { api, CLUSTER_COLORS, fmt, fmtBytes, fmtInt, ordinal, type Cluster, type Diagnostics, type FeatureDef, type Location, type MapLocation, type Pipeline } from "./api";
 import { LocationPanel } from "./LocationPanel";
+import { clusterHighlights, featureLabel } from "./climate";
+import { FeatureDescription } from "./FeatureDescription";
 
 const US_CENTER: [number, number] = [38.5, -96.5];
 const SECTIONS = ["Pipeline", "Cluster map", "Feature map", "Feature space", "Similarity", "Diagnostics", "Queries", "Methodology"] as const;
@@ -55,43 +57,40 @@ function PipelineView({ p }: { p: Pipeline }) {
   return (
     <div className="stack">
       <div className="card">
-        <h2>Before / after preprocessing</h2>
-        <p className="muted">All numbers below are measured by the pipeline run that produced this build (data/processed/pipeline_stats.json). Nothing is estimated.</p>
+        <div className="tag">NOAA ISD · {p.window.start_year}–{p.window.end_year}</div>
+        <h2>Millions of observations. A map you can play.</h2>
+        <p className="muted">Ten years of weather, distilled into the climate of each place.</p>
         <div className="flow">
           <div className="stage">
-            <div className="stage-title">RAW · NOAA ISD {p.window.start_year}–{p.window.end_year}</div>
-            <Stat label="Station-year files downloaded" value={fmtInt(s.files)} sub={`${p.ingest_missing_files} listed stations had no file`} />
+            <div className="stage-title">THE STARTING POINT</div>
             <Stat label="Raw observation records" value={fmtInt(rawRecords)} />
-            <Stat label="Raw size (gzip)" value={fmtBytes(rawBytes)} sub={`download ${fmtInt(p.ingest.seconds as number)} s`} />
-            <Stat label="Raw fields parsed" value={`${(s.raw_columns as string[])?.length ?? "–"}`} sub="mandatory section + AA1 / AJ1 / GF1" />
-            <Stat label="Candidate stations" value={fmtInt(c.stations_with_any_data)} />
+            <p className="muted small">Real measurements from weather stations across the contiguous United States.</p>
           </div>
           <div className="arrow">→</div>
-          <div className="stage">
-            <div className="stage-title">CLEANED · hourly</div>
-            <Stat label="Non-observation records dropped" value={fmtInt(s.rows_dropped_non_hourly_report)} sub="SOD/SOM summaries, SHEF, SURF" />
-            <Stat label="Values nulled by ISD QC flag" value={fmtInt(nulledQc)} sub="codes 2,3,6,7" />
-            <Stat label="Values nulled out of physical range" value={fmtInt(nulledRange)} />
-            <Stat label="Reports collapsed to one per hour" value={fmtInt(s.rows_collapsed_same_hour)} />
-            <Stat label="Clean hourly rows" value={fmtInt(s.clean_hourly_rows)} sub={`${fmtBytes(s.interim_bytes_parquet)} parquet`} />
-          </div>
-          <div className="arrow">→</div>
-          <div className="stage">
-            <div className="stage-title">AGGREGATED · daily</div>
-            <Stat label="Station-day rows" value={fmtInt(s.daily_rows)} sub={`${fmtBytes(s.daily_bytes_parquet)} parquet`} />
-            <Stat label="Stations kept" value={fmtInt(c.stations_kept)} sub={`${fmtInt(c.stations_dropped_low_coverage)} dropped <70% valid days · ${fmtInt(c.stations_dropped_missing_feature)} missing a feature (no dew point / no gauge)`} />
-            <Stat label="Processing wall time" value={`${fmtInt(s.processing_seconds)} s`} sub={`${s.cpu_count} cores · peak worker RSS ${fmtInt(s.peak_rss_mb_worker_max)} MB`} />
-          </div>
-          <div className="arrow">→</div>
-          <div className="stage">
-            <div className="stage-title">STRUCTURED</div>
+          <div className="stage final-stage">
+            <div className="stage-title">READY TO EXPLORE</div>
+            <div className="summary-stats">
             <Stat label="Playable locations" value={fmtInt(p.final.locations)} />
             <Stat label="Climate features" value={`${p.final.features}`} />
             <Stat label="Clusters" value={`${p.final.clusters}`} />
             <Stat label="Final table size" value={fmtBytes(p.final.locations_bytes_parquet)} sub={`${(rawBytes / p.final.locations_bytes_parquet).toFixed(0)}× smaller than raw gzip`} />
+            </div>
           </div>
         </div>
+        <p className="muted small">Counts come from the pipeline run behind this build. Open the audit below for the full record.</p>
       </div>
+      <details className="card disclosure">
+        <summary>Pipeline audit · coverage, processing &amp; performance</summary>
+        <div className="summary-stats">
+          <Stat label="Downloaded station-year files" value={fmtInt(s.files)} sub={`${p.ingest_missing_files} station-year files unavailable`} />
+          <Stat label="Raw archive" value={fmtBytes(rawBytes)} sub={`download ${fmtInt(p.ingest.seconds as number)} s`} />
+          <Stat label="QC / range values removed" value={`${fmtInt(nulledQc)} / ${fmtInt(nulledRange)}`} />
+          <Stat label="Clean hourly rows" value={fmtInt(s.clean_hourly_rows)} sub={fmtBytes(s.interim_bytes_parquet)} />
+          <Stat label="Station-day rows" value={fmtInt(s.daily_rows)} sub={fmtBytes(s.daily_bytes_parquet)} />
+          <Stat label="Processing time" value={`${fmtInt(s.processing_seconds)} s`} sub={`${s.cpu_count} cores · peak worker ${fmtInt(s.peak_rss_mb_worker_max)} MB`} />
+          <Stat label="Stations excluded" value={fmtInt((c.stations_dropped_low_coverage as number) + (c.stations_dropped_missing_feature as number))} sub={`${fmtInt(c.stations_dropped_low_coverage)} low coverage · ${fmtInt(c.stations_dropped_missing_feature)} incomplete features`} />
+          <Stat label="Reports consolidated" value={fmtInt(s.rows_collapsed_same_hour)} sub={`${fmtInt(s.rows_dropped_non_hourly_report)} non-observation records dropped`} />
+        </div>
       <div className="grid2">
         <div className="card">
           <h3>Raw non-null counts per parsed variable</h3>
@@ -118,6 +117,7 @@ function PipelineView({ p }: { p: Pipeline }) {
           <div className="chips">{Object.entries((s.report_type_counts ?? {}) as Record<string, number>).sort((a, b) => b[1] - a[1]).map(([k, v]) => <span className="chip" key={k}>{k.trim()} {fmtInt(v)}</span>)}</div>
         </div>
       </div>
+      </details>
     </div>
   );
 }
@@ -138,11 +138,24 @@ function ClusterMap({ locs, clusters }: { locs: MapLocation[]; clusters: Cluster
         </MapContainer>
       </div>
       <div className="side scroll">
-        <div className="card"><h3>US climate clusters</h3><p className="muted small">k-means on z-scored fingerprints. Clusters are numbered coldest → hottest by mean annual temperature. Click to isolate.</p>
+        <div className="card"><h3>Find a climate family</h3><p className="muted small">Select a group to highlight its stations. Numbers run from cooler to warmer annual averages.</p>
+          <details className="disclosure"><summary>What do silhouette and “sd” mean?</summary>
+            <p className="muted small">Silhouette measures how closely stations fit their own group compared with the nearest other group. Near 1: clearly separated. Near 0: overlapping climates. Below 0: closer, on average, to another group. Each card shows the group's average.</p>
+            <p className="muted small">“sd” means standard deviations from the average station: +1 is one standard deviation above average; −1 is below. These describe climate differences, not confidence.</p>
+          </details>
           {clusters.map((c) => (
-            <div key={c.cluster} className={`cluster-row ${sel === c.cluster ? "active" : ""}`} onClick={() => setSel(sel === c.cluster ? null : c.cluster)}>
-              <span className="dot" style={{ background: CLUSTER_COLORS[c.cluster] }} />
-              <div><b>#{c.cluster}</b> · {c.size} locations · silhouette {fmt(c.silhouette, 2)}<div className="muted small">{c.traits.slice(0, 3).join(" · ")}</div><div className="muted small">mostly {c.states.filter(Boolean).slice(0, 5).join(", ")}</div></div>
+            <div key={c.cluster} className={`cluster-card ${sel === c.cluster ? "active" : ""}`}>
+              <button className="cluster-pick" aria-pressed={sel === c.cluster} onClick={() => setSel(sel === c.cluster ? null : c.cluster)}>
+                <span className="dot" style={{ background: CLUSTER_COLORS[c.cluster] }} />
+                <b>Group {c.cluster}</b><span className="muted small">{fmtInt(c.size)} locations</span>
+              </button>
+              <ul className="cluster-traits">{clusterHighlights(c.centroid_z).map((trait) => <li key={trait}>{trait}</li>)}</ul>
+              <p className="muted small">Most represented states · {c.states.filter(Boolean).slice(0, 5).join(", ")}</p>
+              <details className="disclosure">
+                <summary>Cluster statistics</summary>
+                <p className="small">Average silhouette <b>{fmt(c.silhouette, 2)}</b></p>
+                <table className="tbl"><tbody>{Object.entries(c.centroid_z).sort((a, b) => Math.abs(b[1]) - Math.abs(a[1])).slice(0, 4).map(([key, value]) => <tr key={key}><td>{featureLabel(key)}</td><td>{value > 0 ? "+" : ""}{fmt(value)} sd</td></tr>)}</tbody></table>
+              </details>
             </div>
           ))}
         </div>
@@ -151,7 +164,7 @@ function ClusterMap({ locs, clusters }: { locs: MapLocation[]; clusters: Cluster
   );
 }
 
-function FeatureMap({ locs, defs }: { locs: MapLocation[]; defs: Record<string, any> }) {
+function FeatureMap({ locs, defs }: { locs: MapLocation[]; defs: Record<string, FeatureDef> }) {
   const feats = Object.keys(defs);
   const [f, setF] = useState(feats[0]);
   const vals = locs.map((l) => l[f] as number).filter((v) => v != null);
@@ -168,12 +181,12 @@ function FeatureMap({ locs, defs }: { locs: MapLocation[]; defs: Record<string, 
           ))}
         </MapContainer>
       </div>
-      <div className="side">
+      <div className="side scroll">
         <div className="card"><h3>Feature map</h3>
-          <select value={f} onChange={(e) => setF(e.target.value)}>{feats.map((k) => <option key={k} value={k}>{defs[k].label}</option>)}</select>
+          <select aria-label="Map feature" value={f} onChange={(e) => setF(e.target.value)}>{feats.map((k) => <option key={k} value={k}>{featureLabel(k)}</option>)}</select>
           <div className="legend"><span>{fmt(lo)}</span><div className="legend-bar" /><span>{fmt(hi)} {defs[f].unit}</span></div>
-          <p className="muted small">Colour scale clipped to the 2nd–98th percentile. <b>Aggregation:</b> {defs[f].aggregation}</p>
-          <p className="muted small"><b>Source:</b> {defs[f].fields.join("; ")}</p>
+          <p className="muted small">Blue = lower · red = higher. Colours stop changing beyond the 2nd and 98th percentiles.</p>
+          <FeatureDescription feature={f} definition={defs[f]} />
         </div>
       </div>
     </div>
@@ -187,7 +200,7 @@ function FeatureSpace({ locs, diag }: { locs: MapLocation[]; diag: Diagnostics }
     return m;
   }, [locs]);
   const ev = diag.pca_explained_variance_ratio as number[];
-  const load = (k: string) => Object.entries(diag[k] as Record<string, number>).sort((a, b) => Math.abs(b[1]) - Math.abs(a[1])).slice(0, 4).map(([f, v]) => `${f} (${v > 0 ? "+" : ""}${v.toFixed(2)})`).join(", ");
+  const load = (k: string) => Object.entries(diag[k] as Record<string, number>).sort((a, b) => Math.abs(b[1]) - Math.abs(a[1])).slice(0, 4).map(([f, v]) => `${featureLabel(f)} (${v > 0 ? "+" : ""}${v.toFixed(2)})`).join(", ");
   return (
     <div className="split">
       <div className="map-box card" style={{ padding: 8 }}>
@@ -203,13 +216,22 @@ function FeatureSpace({ locs, diag }: { locs: MapLocation[]; diag: Diagnostics }
         </ResponsiveContainer>
       </div>
       <div className="side scroll">
-        <div className="card"><h3>Climate feature space (PCA)</h3>
-          <p className="muted small">{diag.n_locations} locations × {diag.n_features} z-scored features projected onto the first two principal components. Colour = k-means cluster (fit in the full {diag.n_features}-D space, not on the projection).</p>
+        <div className="card"><div className="tag">A map of climate, not geography</div><h3>Why use PCA?</h3>
+          <p>We cannot draw {diag.n_features} dimensions on a screen. PCA combines the climate features into two axes, giving each station a place on this chart.</p>
+          <ul className="reading-list">
+            <li><b>Nearby dots</b> have similar profiles in this view. Look for climate neighbours and groups that overlap.</li>
+            <li><b>Colour</b> shows the station's climate cluster. Hover over a dot to identify it.</li>
+            <li><b>{fmt(100 * (ev[0] + ev[1]), 0)}% of variation</b> is captured here. The remaining detail is lost, so nearby dots can still differ in other features.</li>
+          </ul>
+          <p className="muted small">Clustering and climate similarity use all {diag.n_features} standardized features. The two-axis projection is only a visual aid; the game score uses geographic distance.</p>
+          <details className="disclosure"><summary>How to read the axes</summary>
+          <p className="muted small">PC1 captures the largest direction of variation; PC2 captures the largest remaining direction at a right angle to it. Loadings are the feature weights: a positive weight increases toward the positive end of that axis.</p>
           <table className="tbl kv"><tbody>
             <tr><td>Explained variance</td><td>{ev.map((v, i) => `PC${i + 1} ${fmt(100 * v, 0)}%`).join(" · ")}</td></tr>
             <tr><td>PC1 loadings</td><td className="small">{load("pca_loadings_pc1")}</td></tr>
             <tr><td>PC2 loadings</td><td className="small">{load("pca_loadings_pc2")}</td></tr>
           </tbody></table>
+          </details>
         </div>
       </div>
     </div>
@@ -258,6 +280,8 @@ function DiagnosticsView({ diag, clusters, defs }: { diag: Diagnostics; clusters
   const maxSil = Math.max(...ms.map((r) => r.kmeans_silhouette));
   return (
     <div className="stack">
+      <details className="card disclosure">
+        <summary>Model selection &amp; cluster stability</summary>
       <div className="grid2">
         <div className="card"><h3>Model selection</h3>
           <p className="muted small">Rule: {diag.k_rule}. Chosen k = <b>{diag.chosen_k}</b>, silhouette {fmt(diag.final_silhouette, 3)}. Three algorithms were compared at every k; k-means and Ward agree closely, GMM BIC keeps decreasing (it rewards more components on continuous gradients and was not used for the choice).</p>
@@ -275,25 +299,43 @@ function DiagnosticsView({ diag, clusters, defs }: { diag: Diagnostics; clusters
           <table className="tbl"><thead><tr><th>#</th><th>size</th><th>within var</th><th>silhouette</th></tr></thead><tbody>{clusters.map((c) => <tr key={c.cluster}><td><span className="dot" style={{ background: CLUSTER_COLORS[c.cluster] }} />{c.cluster}</td><td>{c.size}</td><td>{fmt(c.within_variance, 2)}</td><td>{fmt(c.silhouette, 3)}</td></tr>)}</tbody></table>
         </div>
       </div>
-      <div className="grid2">
-        <div className="card"><h3>Feature signal: which features matter?</h3>
-          <p className="muted small"><b>Geographic signal</b> — predict a station's lat/lon from its fingerprint alone (5-NN in feature space, self excluded). All features: median error <b>{fmtInt(geo.all_features_median_error_mi)} mi</b>. Removing a feature that carries unique geographic information makes the error grow; a feature alone shows how much it localises by itself.</p>
-          <table className="tbl"><thead><tr><th>Feature</th><th>Error without it</th><th>Alone</th><th>Ablation silhouette</th><th>ARI vs full</th><th>F ratio</th></tr></thead>
+      </details>
+        <div className="card"><h3>Which features help locate a place?</h3>
+          <p>Using all features, the median location error is <b>{fmt(geo.all_features_median_error_mi)} miles</b>.</p>
+          <ol className="reading-list">
+            <li>For each station, find its five closest climate neighbours, excluding the station itself.</li>
+            <li>Average their coordinates, giving more weight to closer climate matches. Measure the miles from that estimate to the real station.</li>
+            <li>Remove one feature, repeat for every station, and take the middle error. That is <b>“Error without it.”</b></li>
+          </ol>
+          <p className="muted small">A positive change means removing the feature worsened this estimate. A negative change means it improved. Correlated features can replace one another; this is a diagnostic on this station network, not causal importance or a held-out accuracy score.</p>
+          <div className="table-scroll">
+          <table className="tbl"><thead><tr><th>Feature removed</th><th>Error without it</th><th>Change from all features</th></tr></thead>
             <tbody>{feats.map((f) => (
-              <tr key={f}><td>{defs[f]?.label ?? f}</td>
-                <td className={geo.without_feature_median_error_mi[f] > geo.all_features_median_error_mi ? "pos" : "neg"}>{fmtInt(geo.without_feature_median_error_mi[f])} mi</td>
-                <td>{fmtInt(geo.single_feature_median_error_mi[f])} mi</td>
-                <td>{fmt(abl[f].silhouette, 3)}</td><td>{fmt(abl[f].ari_vs_full, 2)}</td><td>{fmt(fr[f], 0)}</td></tr>
+              <tr key={f}><td>{featureLabel(f)}</td>
+                <td>{fmt(geo.without_feature_median_error_mi[f])} mi</td>
+                <td className={geo.without_feature_median_error_mi[f] > geo.all_features_median_error_mi ? "pos" : "neg"}>{geo.without_feature_median_error_mi[f] > geo.all_features_median_error_mi ? "+" : ""}{fmt(geo.without_feature_median_error_mi[f] - geo.all_features_median_error_mi)} mi</td></tr>
             ))}</tbody></table>
-          <p className="muted small">F ratio = between-cluster / within-cluster variance of the z-scored feature (higher = feature separates the clusters more). Ablation silhouette is recomputed in the reduced space (not directly comparable to the full-space value, but ARI shows how much the partition changes).</p>
-        </div>
-        <div className="card"><h3>Feature correlation (redundancy check)</h3>
-          <div className="heat">
-            <div className="heat-row"><div className="heat-lbl" />{feats.map((f) => <div key={f} className="heat-col-lbl" title={f}>{f.slice(0, 6)}</div>)}</div>
-            {feats.map((a) => <div key={a} className="heat-row"><div className="heat-lbl" title={a}>{defs[a]?.label.slice(0, 22)}</div>{feats.map((b) => { const v = diag.feature_correlation[a][b]; return <div key={b} className="heat-cell" title={`${a} × ${b}: ${v.toFixed(2)}`} style={{ background: v > 0 ? `rgba(226,87,89,${Math.abs(v)})` : `rgba(78,121,167,${Math.abs(v)})` }} />; })}</div>)}
           </div>
-          <p className="muted small">Red = positive, blue = negative correlation. Temperature features are strongly inter-correlated by construction (winter/summer/annual) — this is deliberate: the game clue talks about seasons, and k-means with equal weights treats the temperature block as roughly 3× weight, which matches how people reason about climate. Alternatives are discussed in METHODOLOGY.md.</p>
+          <details className="disclosure"><summary>Single-feature &amp; clustering diagnostics</summary>
+          <div className="table-scroll"><table className="tbl"><thead><tr><th>Feature</th><th>Error using only this feature</th><th>Silhouette without it</th><th>ARI vs full</th><th>F ratio</th></tr></thead>
+            <tbody>{feats.map((f) => <tr key={f}><td>{featureLabel(f)}</td><td>{fmtInt(geo.single_feature_median_error_mi[f])} mi</td><td>{fmt(abl[f].silhouette, 3)}</td><td>{fmt(abl[f].ari_vs_full, 2)}</td><td>{fmt(fr[f], 0)}</td></tr>)}</tbody>
+          </table></div>
+          <p className="muted small">F ratio = between-cluster / within-cluster variance of the z-scored feature (higher = feature separates the clusters more). Ablation silhouette is recomputed in the reduced space (not directly comparable to the full-space value, but ARI shows how much the partition changes).</p>
+          </details>
         </div>
+      <div className="card"><h3>Which features move together?</h3>
+        <p className="muted small">Pearson correlation across stations: <b>+1</b> = rise together · <b>0</b> = little linear relationship · <b>−1</b> = move in opposite directions. Red is positive, blue is negative.</p>
+        <div className="table-scroll" role="region" aria-label="Feature correlation matrix" tabIndex={0}>
+          <table className="correlation-table">
+            <caption>Feature correlation · values rounded to two decimals</caption>
+            <thead><tr><th scope="col">Feature</th>{feats.map((f, i) => <th scope="col" key={f} title={featureLabel(f)}>{i + 1}</th>)}</tr></thead>
+            <tbody>{feats.map((a, i) => <tr key={a}><th scope="row">{i + 1}. {featureLabel(a)}</th>{feats.map((b) => {
+              const v: number = diag.feature_correlation[a][b];
+              return <td key={b} title={`${defs[a]?.label ?? a} × ${defs[b]?.label ?? b}: ${v.toFixed(2)}`} style={{ background: v > 0 ? `rgba(226,87,89,${Math.abs(v) * 0.65})` : `rgba(78,121,167,${Math.abs(v) * 0.65})` }}>{v.toFixed(2)}</td>;
+            })}</tr>)}</tbody>
+          </table>
+        </div>
+        <p className="muted small">Column numbers match the numbered row labels. Strongly correlated features repeat some information, so equal feature weights give related groups of features more influence.</p>
       </div>
     </div>
   );
@@ -312,7 +354,8 @@ function Queries({ defs }: { defs: Record<string, any> }) {
     <div className="stack">
       <div className="grid2">
         <div className="card"><h3>Which regions have unusually high/low values?</h3>
-          <div className="row gap"><select value={f} onChange={(e) => setF(e.target.value)}>{feats.map((k) => <option key={k} value={k}>{defs[k].label}</option>)}</select><select value={dir} onChange={(e) => setDir(e.target.value as any)}><option value="high">highest</option><option value="low">lowest</option></select></div>
+          <div className="row gap"><select aria-label="Ranked feature" value={f} onChange={(e) => setF(e.target.value)}>{feats.map((k) => <option key={k} value={k}>{featureLabel(k)}</option>)}</select><select aria-label="Ranking direction" value={dir} onChange={(e) => setDir(e.target.value === "low" ? "low" : "high")}><option value="high">highest</option><option value="low">lowest</option></select></div>
+          {f === "frozen_precip_days_per_year" && <p className="muted small">Snow days is a cold-and-wet-day proxy, not observed snowfall.</p>}
           <table className="tbl"><tbody>{ext.map((r) => <tr key={r.station_id}><td><span className="dot" style={{ background: CLUSTER_COLORS[r.cluster] }} />{r.name}, {r.state}</td><td>{fmt(r[f], 1)} {defs[f].unit}</td><td className="muted small">{ordinal(r[`pct_${f}`])} pct</td></tr>)}</tbody></table>
         </div>
         <div className="card"><h3>Climate twins: similar climate, far apart</h3>
@@ -329,47 +372,48 @@ function Queries({ defs }: { defs: Record<string, any> }) {
 }
 
 function Methodology({ p, diag }: { p: Pipeline; diag: Diagnostics }) {
-  const rules = p.rules as any;
   return (
     <div className="stack">
       <div className="grid2">
-        <div className="card"><h3>Geographic representation: why stations?</h3>
-          <p className="small">We evaluated stations, counties, regular grid cells, H3 cells and learned regions. The ISD network has ~{p.final.locations} CONUS stations with ≥70% valid days over {p.window.start_year}–{p.window.end_year}; that is already a fairly even ~40–60 mile spacing. Counties (3,100) would leave ~40% of counties with zero stations and force interpolation; coarse grids/H3 would average distinct microclimates (e.g. coastal vs inland California cells) and destroy the signal we want players to detect. Stations are the only unit where every displayed number is a direct aggregation of real observations with no spatial model, which is what makes provenance tractable. Learned clusters are used <i>on top</i> of stations as the second representation layer (the "hybrid" option).</p>
+        <div className="card"><h3>Why weather stations?</h3>
+          <ul className="reading-list">
+            <li><b>{fmtInt(p.final.locations)} locations</b> across the contiguous United States, each linked to real NOAA observations.</li>
+            <li><b>Direct measurements:</b> a station's profile describes its own location. Filling counties or grid cells without stations would require a spatial model.</li>
+            <li><b>Climate groups:</b> clustering connects stations with similar conditions, even when they are far apart.</li>
+          </ul>
         </div>
         <div className="card"><h3>Time window: why {p.window.start_year}–{p.window.end_year}?</h3>
-          <p className="small">The station history file shows the CONUS network grew from ~1,200 stations (2000) to ~2,600 (2010) and has been flat since. A ten-year block from 2015 is the longest recent window with a stable network, long enough to average out single anomalous years (2015–16 El Niño, 2021 heat dome are in the window) and small enough (18.7 GB gzip) to reprocess from raw in minutes. WMO climate normals use 30 years; we document that our values are a decadal climatology, not normals.</p>
+          <ul className="reading-list">
+            <li><b>Ten complete years</b> give us seasonal averages across many weather events.</li>
+            <li><b>A consistent window</b> lets us compare places over the same period.</li>
+            <li><b>A decadal snapshot:</b> formal WMO climate normals use 30 years. Unusual years still influence these averages.</li>
+          </ul>
         </div>
       </div>
       <div className="grid2">
-        <div className="card"><h3>Cleaning rules (pipeline/config.py)</h3>
-          <table className="tbl kv"><tbody>
-            <tr><td>Report types kept</td><td>hourly / synoptic observations only; SOD, SOM daily & monthly summaries dropped</td></tr>
-            <tr><td>QC codes rejected</td><td>{rules.qc_fail_codes.join(", ")} (ISD "suspect" / "erroneous")</td></tr>
-            <tr><td>Physical bounds</td><td className="small">{Object.entries(rules.physical_bounds as Record<string, [number, number]>).map(([k, [a, b]]) => `${k} ${a}…${b}`).join(" · ")}</td></tr>
-            <tr><td>Hourly de-duplication</td><td>mean of all reports within a clock hour (specials would otherwise over-weight storms)</td></tr>
-            <tr><td>Local day</td><td>UTC shifted by round(lon/15) hours</td></tr>
-            <tr><td>Valid day</td><td>≥ {rules.min_obs_per_day} hourly temperature values</td></tr>
-            <tr><td>Station kept</td><td>≥ {100 * rules.min_valid_day_fraction}% valid days in window, all features finite</td></tr>
-          </tbody></table>
+        <div className="card"><h3>How climate similarity works</h3>
+          <ul className="reading-list">
+            <li><b>{diag.n_features} features</b> describe temperature, precipitation, humidity and wind.</li>
+            <li><b>A shared scale:</b> features are standardized before measuring distance, so inches and degrees can be compared with equal feature weights.</li>
+            <li><b>A relative score:</b> 90% similarity means this pair is closer in climate than 90% of all station pairs.</li>
+            <li><b>PCA is the picture:</b> the chart compresses the features into two axes; climate distances still use all of them.</li>
+          </ul>
         </div>
-        <div className="card"><h3>Similarity & scoring</h3>
-          <table className="tbl kv"><tbody>
-            <tr><td>Normalisation</td><td>{diag.normalisation}</td></tr>
-            <tr><td>Distance</td><td>Euclidean in z-space, {diag.n_features} features, equal weights</td></tr>
-            <tr><td>Similarity %</td><td>share of all {fmtInt(diag.n_locations * (diag.n_locations - 1) / 2)} station pairs with a larger distance. Median pair distance = {fmt(diag.pair_distance_quantiles["0.5"], 2)}; 5% of pairs are closer than {fmt(diag.pair_distance_quantiles["0.05"], 2)}.</td></tr>
-            <tr><td>Score</td><td>{String((p.scoring as any).formula)} with max {String((p.scoring as any).max_score)}, r0 = {String((p.scoring as any).perfect_radius_mi)} mi, scale = {String((p.scoring as any).scale_mi)} mi</td></tr>
-            <tr><td>Clue</td><td>Deterministic template from percentile bands (no numbers, no names). Optional LLM rewrite is constrained to listed facts and rejected if it contains numbers or identifying tokens.</td></tr>
-          </tbody></table>
+        <div className="card"><h3>How the game works</h3>
+          <ul className="reading-list">
+            <li><b>Map accuracy earns points:</b> up to {String(p.scoring.max_score)} for a guess within {String(p.scoring.perfect_radius_mi)} miles. Points decrease exponentially with distance beyond that radius.</li>
+            <li><b>Climate is a second comparison:</b> your click uses the nearest station for climate similarity, independently of your geographic score.</li>
+            <li><b>Clues come from the data:</b> deterministic descriptions use measured climate features. Optional AI rewrites are checked for names and unsupported numbers.</li>
+          </ul>
         </div>
       </div>
       <div className="card"><h3>Known limitations</h3>
-        <ul className="small">
-          <li><b>Precipitation from 1-hour ASOS totals.</b> Hours without a report are treated as zero on days when the station was operating. Frozen precipitation is under-caught by tipping-bucket gauges; totals in snowy climates are biased low. The independent 24-h AA1 totals are shown per station as a cross-check.</li>
-          <li><b>No true snowfall.</b> ISD AJ1 snow depth was present on too few station-days at ASOS sites (see Pipeline → coverage). "Frozen-precipitation days" (≥1 mm on a day with mean temp ≤ 0 °C) is a proxy and is labelled as such.</li>
+        <ul className="reading-list">
+          <li><b>Precipitation can read low.</b> Missing hourly reports on operating days are treated as zero; gauges can miss frozen precipitation. Faulty gauges can escape the quality checks.</li>
+          <li><b>“Snow days” is a proxy.</b> It counts cold days with precipitation, not observed snow or snow depth.</li>
           <li><b>Station ≠ region.</b> A station represents its own footprint (airports dominate). Mountain climates are under-sampled.</li>
           <li><b>Clusters are a partition of a continuum.</b> Silhouette ~{fmt(diag.final_silhouette, 2)}; boundaries are soft and outliers exist (see Queries).</li>
-          <li><b>Decadal, not normals.</b> 2015–2024 was warmer than the 1991–2020 normals nearly everywhere.</li>
-          <li><b>Sea-level pressure, ceiling and sky cover</b> were excluded for coverage, not because they lack signal.</li>
+          <li><b>Correlated features overlap.</b> Related temperature features give temperature more influence in the climate distance.</li>
         </ul>
       </div>
     </div>
