@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { api, CLUSTER_COLORS, fmt, fmtInt, ordinal, type FeatureDef, type Location } from "./api";
 
 let defsCache: Record<string, FeatureDef> | null = null;
@@ -47,8 +47,8 @@ export function LocationPanel({ location }: { location: Location }) {
           <thead><tr><th>Feature</th><th>Value</th><th>Percentile</th><th></th></tr></thead>
           <tbody>
             {Object.entries(location.features).map(([k, v]) => (
-              <>
-                <tr key={k} className="clickable" onClick={() => setOpen(open === k ? null : k)}>
+              <Fragment key={k}>
+                <tr className="clickable" onClick={() => setOpen(open === k ? null : k)}>
                   <td>{defs?.[k]?.label ?? k}</td>
                   <td>{fmt(v, k === "summer_precip_fraction" ? 2 : 1)} {defs?.[k]?.unit}</td>
                   <td><div className="bar" style={{ width: `${location.percentiles[k]}%` }} /> {ordinal(location.percentiles[k])}</td>
@@ -62,7 +62,7 @@ export function LocationPanel({ location }: { location: Location }) {
                     <div><b>Window:</b> 2015–2024 · <b>Geographic unit:</b> station · <b>Dataset:</b> NOAA ISD (noaa-isd-pds S3)</div>
                   </td></tr>
                 )}
-              </>
+              </Fragment>
             ))}
           </tbody>
         </table>
