@@ -41,6 +41,22 @@ The weakest variable by a wide margin.
   hour, several reports' 1-h totals are collapsed with `max` (they describe the
   same hour), so there is no double counting; the remaining bias is plausibly
   the wet 2015–2024 decade in the Southeast, but that is not verified here.
+* **Faulty gauges read high**, and no ISD QC flag catches them. Two failure
+  modes were found by inspecting the top-ranked stations: (a) *stuck* AWOS
+  gauges re-transmitting one non-zero "1-hour" total every hour (Mena AR:
+  45.7 mm × 24 h = 1,097 mm in a day), and (b) *noisy* gauges emitting varying
+  60–150 mm "hourly" totals, often in winter (Bay Bridge MD summed to
+  205 in/yr; Chester CT 692 mm on a January day). Mitigation, all heuristic:
+  a station-day with ≥ 6 identical non-zero 1-h totals of ≥ 5 mm is
+  `precip_stuck_gauge`; a station-day summing to > 300 mm is
+  `precip_implausible`; both get *unknown* (null, not 0) precipitation and
+  leave the denominators (annualisation uses days with a known total). A
+  station with ≥ 5 flagged days has its whole gauge treated as untrusted:
+  precipitation features are null and it leaves the model table. Real
+  ≥ 300 mm days do exist (tropical systems), so the bound may discard a few
+  genuine extremes; a gauge stuck below 5 mm, or noisy below 300 mm/day with
+  < 5 bad days, is not caught. Per-station flagged-day counts are shown in the
+  location panel; totals are in METRICS.md.
 * **24-hour totals are not used** (4.2 % of days; reporting windows straddle
   local days), so there is no independent within-dataset cross-check.
 * **Snow depth is unusable** (0.4 % of station-days). "Frozen-precipitation
@@ -80,7 +96,7 @@ The weakest variable by a wide margin.
 ## Engineering
 
 * **Latency numbers** are single-process, warm, localhost, no concurrency.
-  `GET /api/locations` (all 1,846 rows for the maps) is the only endpoint over
+  `GET /api/locations` (all 1,827 rows for the maps) is the only endpoint over
   10 ms.
 * **Rounds are held in process memory**; restarting the server forgets open
   rounds and there is no multi-user leaderboard.

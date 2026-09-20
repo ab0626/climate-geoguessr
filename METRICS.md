@@ -32,7 +32,7 @@ wind dir 43.9 · sky cover 61.8 · SLP 75.7 · precip AA1 77.9 · snow depth AJ1
 | Values nulled out of physical range | 2,939,999 values (2,939,990 sky-cover codes 9/10; 9 temperatures) |
 | Reports collapsed to one per station-hour | 291,649,134 records |
 | **Clean hourly rows** | **210,218,209** (3,059,542,751 B Parquet) |
-| Station-day rows | 8,724,373 (327,852,132 B Parquet) |
+| Station-day rows | 8,724,373 (336,422,805 B Parquet) |
 | Stations with daily data | 2,501 |
 
 Variables removed from the model and why: `SOD/SOM` summaries (double count),
@@ -49,8 +49,9 @@ converted once to °F, mph, inches.
 | --- | ---: |
 | With any daily data | 2,501 |
 | Removed: < 70 % valid days (≥ 18 temp hours/day) | 201 |
-| Removed: missing a model feature (322 no gauge, 294 no dew point, 6 no wind; overlapping) | 454 |
-| **Playable locations** | **1,846** |
+| Removed: missing a model feature (322 no gauge, 19 untrusted gauge, 294 no dew point, 6 no wind; overlapping) | 473 |
+| **Playable locations** | **1,827** |
+| Station-days with precipitation set to unknown (stuck gauge / > 300 mm) | 92 / 236 |
 
 Coverage by time: every kept station has ≥ 70 % valid days (min 70.2 %, median
 98.5 % of the 3,652.5-day window); shown per station in the UI. Coverage by
@@ -65,50 +66,50 @@ full distribution.
 | Climate features in model | 14 (+3 descriptive) |
 | Normalisation | z-score per feature, equal weights |
 | Clustering | k-means, k = 8 (rule: argmax silhouette, k ≥ 5) |
-| Final k-means silhouette | 0.233 |
-| Min / mean centroid separation (z units) | 2.78 / 5.01 |
-| Stability — 80 % subsample ARI (25 reps) | 0.883 ± 0.128 |
-| Stability — N(0, 0.1 sd) noise ARI (25 reps) | 0.908 ± 0.031 |
-| PCA explained variance PC1…PC5 | 41.0 % · 23.5 % · 11.2 % · 7.4 % · 6.0 % |
-| Pairwise climate distance quantiles (z) 1/5/10/25/50/75/90 % | 1.20 · 1.87 · 2.37 · 3.45 · 4.80 · 6.17 · 7.45 |
+| Final k-means silhouette | 0.235 |
+| Min / mean centroid separation (z units) | 2.81 / 5.05 |
+| Stability — 80 % subsample ARI (25 reps) | 0.919 ± 0.073 |
+| Stability — N(0, 0.1 sd) noise ARI (25 reps) | 0.921 ± 0.028 |
+| PCA explained variance PC1…PC5 | 41.1 % · 23.6 % · 11.3 % · 7.4 % · 6.0 % |
+| Pairwise climate distance quantiles (z) 1/5/10/25/50/75/90 % | 1.21 · 1.87 · 2.37 · 3.46 · 4.81 · 6.18 · 7.45 |
 | Geographic signal: 5-NN lat/lon from features, median error | 73.9 mi |
-| Feature build / clustering wall time | 0.66 s / 12.6 s |
-| Final playable table | 530,440 B (35,000× smaller than raw gzip) |
+| Feature build / clustering wall time | 0.71 s / 15.8 s |
+| Final playable table | 540,468 B (35,000× smaller than raw gzip) |
 
 Model selection (silhouette; GMM BIC lower is better):
 
 | k | k-means | Ward | GMM | GMM BIC |
 | --- | --- | --- | --- | --- |
-| 3 | 0.284 | 0.249 | 0.231 | −930 |
-| 4 | 0.212 | 0.245 | 0.254 | −4,466 |
-| 5 | 0.213 | 0.264 | 0.166 | −6,379 |
-| 6 | 0.223 | 0.212 | 0.177 | −8,171 |
-| 7 | 0.230 | 0.194 | 0.177 | −8,068 |
-| **8** | **0.233** | 0.192 | 0.150 | −9,998 |
-| 9 | 0.222 | 0.187 | 0.165 | −10,432 |
-| 10 | 0.230 | 0.199 | 0.187 | −9,702 |
-| 11 | 0.233 | 0.198 | 0.176 | −10,015 |
-| 12 | 0.221 | 0.211 | 0.175 | −10,910 |
+| 3 | 0.284 | 0.252 | 0.209 | −2,519 |
+| 4 | 0.214 | 0.267 | 0.231 | −3,765 |
+| 5 | 0.213 | 0.265 | 0.244 | −6,357 |
+| 6 | 0.223 | 0.218 | 0.190 | −8,407 |
+| 7 | 0.232 | 0.222 | 0.147 | −9,471 |
+| **8** | **0.235** | 0.213 | 0.161 | −10,339 |
+| 9 | 0.222 | 0.199 | 0.151 | −10,378 |
+| 10 | 0.228 | 0.209 | 0.168 | −10,524 |
+| 11 | 0.234 | 0.195 | 0.177 | −10,930 |
+| 12 | 0.226 | 0.202 | 0.176 | −10,599 |
 
 Clusters (size, silhouette, defining traits):
 
 | # | n | sil | traits |
 | --- | ---: | ---: | --- |
-| 0 | 118 | 0.14 | frozen-precip days +2.6 sd, wet days +1.2 sd, cold summers |
-| 1 | 308 | 0.29 | winter temp −1.3 sd, seasonal range +1.3 sd (northern interior) |
-| 2 | 232 | 0.15 | summer dew point −1.6 sd, diurnal range +1.4 sd (high/dry West) |
-| 3 | 446 | 0.27 | wet days +0.6 sd, hot days −0.5 sd (Midwest / mid-Atlantic) |
-| 4 | 99 | 0.23 | summer precip fraction −2.1 sd, seasonal range −2.0 sd (Pacific coast) |
-| 5 | 231 | 0.14 | hot days +1.3 sd, summer temp +1.1 sd (southern plains / valleys) |
-| 6 | 79 | 0.28 | dew-point depression +3.3 sd, hot days +2.0 sd (desert SW) |
-| 7 | 333 | 0.28 | annual precip +1.2 sd, winter temp +1.1 sd (Southeast) |
+| 0 | 117 | 0.15 | frozen-precip days +2.6 sd, wet days +1.2 sd, cold summers |
+| 1 | 309 | 0.30 | winter temp −1.3 sd, seasonal range +1.3 sd (northern interior) |
+| 2 | 233 | 0.15 | summer dew point −1.6 sd, diurnal range +1.4 sd (high/dry West) |
+| 3 | 442 | 0.26 | wet days +0.6 sd, hot days −0.5 sd (Midwest / mid-Atlantic) |
+| 4 | 97 | 0.22 | summer precip fraction −2.1 sd, seasonal range −2.0 sd (Pacific coast) |
+| 5 | 229 | 0.14 | hot days +1.3 sd, summer temp +1.1 sd (southern plains / valleys) |
+| 6 | 327 | 0.29 | annual precip +1.2 sd, winter temp +1.1 sd (Southeast) |
+| 7 | 73 | 0.29 | dew-point depression +3.4 sd, hot days +2.1 sd (desert SW) |
 
 Feature ablation (drop one feature, re-cluster; ARI vs full model): the
-precipitation features matter most — dropping annual precip → ARI 0.54, wet
-days 0.60, frozen-precip days 0.62, dew-point depression 0.69; every other
-single feature ≥ 0.80. Silhouette barely moves (0.213–0.264). Geographic-signal
-ablation: dropping summer_precip_fraction hurts most (73.9 → 79.2 mi median
-error); dropping mean wind *improves* it slightly (70.3 mi), i.e. wind is the
+precipitation and humidity features matter most — dropping dew-point
+depression → ARI 0.56, annual precip 0.60, frozen-precip days 0.62, wet days
+0.68; every other single feature ≥ 0.82. Silhouette barely moves (0.211–0.265).
+Geographic-signal ablation: dropping summer_precip_fraction hurts most (73.9 →
+79.5 mi median error); dropping mean wind *improves* it slightly (70.1 mi), i.e. wind is the
 least geographically informative feature.
 
 Spot check against published 1991–2020 NOAA normals (not used anywhere in the
@@ -128,8 +129,8 @@ pipeline; listed only as a sanity check of the AA1 method):
 
 | Metric | Value |
 | --- | ---: |
-| Parse + clean + aggregate wall time | 361.1 s (8 workers) |
-| Peak RSS, parent / worst worker | 2,397.7 MB / 421.1 MB |
+| Parse + clean + aggregate wall time | 366.7 s (8 workers) |
+| Peak RSS, parent / worst worker | 2,712.0 MB / 408.4 MB |
 | Throughput | ≈ 1.41 M raw records / s |
 
 ## Query latency (FastAPI + uvicorn, single process, warm, 100 rounds + 20 explorer sweeps)
@@ -145,7 +146,7 @@ pipeline; listed only as a sanity check of the AA1 method):
 | GET /api/explore/extremes | 20 | 1.66 ms | 3.11 ms | 3.11 ms |
 | GET /api/explore/outliers | 20 | 1.34 ms | 2.01 ms | 2.01 ms |
 | GET /api/explore/twins | 20 | 1.46 ms | 1.99 ms | 1.99 ms |
-| GET /api/locations (all 1,846, for maps) | 21 | 109 ms | 124 ms | 143 ms |
+| GET /api/locations (all 1,827, for maps) | 21 | 109 ms | 124 ms | 143 ms |
 
 The live table in the UI (Explore → Pipeline) shows the same statistics for the
 process currently serving you.

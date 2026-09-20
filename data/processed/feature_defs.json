@@ -75,8 +75,8 @@
     "fields": [
       "ISD AA1 liquid precipitation, 1-hour period, depth (mm) + QC"
     ],
-    "aggregation": "sum of 1-h totals per local day (0 if station operating but no report) -> sum / n_valid_days * 365.25",
-    "missing": "days with <18 temp hours -> null (not 0); ASOS reports 1-h total only when non-zero",
+    "aggregation": "sum of 1-h totals per local day (0 if station operating but no report) -> sum / n_days_with_known_precip * 365.25",
+    "missing": "days with <18 temp hours, stuck-gauge days (>=6 identical non-zero 1-h totals >=5 mm) and days >300 mm -> null (not 0); stations with >=5 flagged days have no trusted gauge",
     "group": "precipitation"
   },
   "wet_days_per_year": {
@@ -85,8 +85,8 @@
     "fields": [
       "AA1 1-hour precipitation"
     ],
-    "aggregation": "count(valid days with precip >= 1 mm) / n_valid_days * 365.25",
-    "missing": "normalised by valid days",
+    "aggregation": "count(days with known precip >= 1 mm) / n_days_with_known_precip * 365.25",
+    "missing": "normalised by days with known precipitation",
     "group": "precipitation"
   },
   "summer_precip_fraction": {
@@ -106,7 +106,7 @@
       "AA1 1-hour precipitation",
       "air temperature"
     ],
-    "aggregation": "count(valid days with precip >= 1 mm and daily mean temp <= 0\u00b0C) / n_valid_days * 365.25",
+    "aggregation": "count(days with known precip >= 1 mm and daily mean temp <= 0\u00b0C) / n_days_with_known_precip * 365.25",
     "missing": "AJ1 snow depth coverage was too sparse at ASOS stations; this proxy uses temperature + precipitation only",
     "group": "snow"
   },

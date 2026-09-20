@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { api, CLUSTER_COLORS, fmt, fmtInt, ordinal, type FeatureDef, type Location } from "./api";
 
 let defsCache: Record<string, FeatureDef> | null = null;
@@ -36,6 +36,7 @@ export function LocationPanel({ location }: { location: Location }) {
             <tr><td>Wind coverage</td><td>{pct(c.n_wind_days as number, c.n_valid_days as number)}</td></tr>
             <tr><td>Visibility coverage</td><td>{pct(c.n_visibility_days as number, c.n_visibility_days as number ? (c.n_valid_days as number) : 0)}</td></tr>
             <tr><td>Valid days with a 1-h precip report</td><td>{pct(c.n_days_with_precip_report as number, c.n_valid_days as number)}</td></tr>
+            <tr><td>Precip days set to unknown (stuck gauge / &gt;300 mm)</td><td>{fmtInt(c.n_precip_stuck_days as number)} / {fmtInt(c.n_precip_implausible_days as number)}</td></tr>
             <tr><td>Days with a 24-h AA1 total</td><td>{fmtInt(c.n_precip_24h_days as number)} <span className="muted">(not used; 24-h windows straddle local days)</span></td></tr>
           </tbody>
         </table>
@@ -46,8 +47,8 @@ export function LocationPanel({ location }: { location: Location }) {
           <thead><tr><th>Feature</th><th>Value</th><th>Percentile</th><th></th></tr></thead>
           <tbody>
             {Object.entries(location.features).map(([k, v]) => (
-              <>
-                <tr key={k} className="clickable" onClick={() => setOpen(open === k ? null : k)}>
+              <Fragment key={k}>
+                <tr className="clickable" onClick={() => setOpen(open === k ? null : k)}>
                   <td>{defs?.[k]?.label ?? k}</td>
                   <td>{fmt(v, k === "summer_precip_fraction" ? 2 : 1)} {defs?.[k]?.unit}</td>
                   <td><div className="bar" style={{ width: `${location.percentiles[k]}%` }} /> {ordinal(location.percentiles[k])}</td>
@@ -61,7 +62,7 @@ export function LocationPanel({ location }: { location: Location }) {
                     <div><b>Window:</b> 2015–2024 · <b>Geographic unit:</b> station · <b>Dataset:</b> NOAA ISD (noaa-isd-pds S3)</div>
                   </td></tr>
                 )}
-              </>
+              </Fragment>
             ))}
           </tbody>
         </table>

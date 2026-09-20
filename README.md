@@ -9,9 +9,9 @@ REAL NOAA DATA           18.7 GB gzip · 24,529 station-year files · 509,956,31
       ↓  pipeline/       parse fixed-width ISD, drop summaries, QC flags, physical bounds, 1 row / station-hour
 REAL PREPROCESSING       210,218,209 clean hourly rows · 8,724,373 station-days
       ↓  features/       ≥18 valid hours/day, ≥70 % valid days, gauge-coverage rule
-REAL CLIMATE FEATURES    1,846 stations × 14 model features (+ descriptive extras)
+REAL CLIMATE FEATURES    1,827 stations × 14 model features (+ descriptive extras)
       ↓  clustering/     z-score → k-means (k=8) · PCA · pairwise distance quantiles · 10-NN
-REAL STRUCTURE           silhouette 0.233 · ARI stability 0.88 / 0.91 · 5-NN geo error 74 mi (median)
+REAL STRUCTURE           silhouette 0.235 · ARI stability 0.92 / 0.92 · 5-NN geo error 74 mi (median)
       ↓  backend/ + frontend/
 ONE PLAYABLE ROUND       clue → 45 s → map click → score /5000 → reveal → "Signal found" → Advanced metrics
 ```

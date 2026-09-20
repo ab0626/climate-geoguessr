@@ -68,4 +68,4 @@ export const CLUSTER_COLORS = ["#4e79a7", "#59a14f", "#9c755f", "#f28e2b", "#e15
 export const fmt = (v: number | null | undefined, d = 1) => (v == null || Number.isNaN(v) ? "–" : v.toLocaleString(undefined, { maximumFractionDigits: d, minimumFractionDigits: d }));
 export const fmtInt = (v: number | null | undefined) => (v == null ? "–" : Math.round(v).toLocaleString());
 export const fmtBytes = (b: number | undefined) => (b == null ? "–" : b > 1e9 ? `${(b / 1e9).toFixed(2)} GB` : b > 1e6 ? `${(b / 1e6).toFixed(1)} MB` : `${(b / 1e3).toFixed(0)} KB`);
-export const ordinal = (n: number) => { const r = Math.round(n); const s = ["th", "st", "nd", "rd"]; const v = r % 100; return r + (s[(v - 20) % 10] || s[v] || s[0]); };
+export const ordinal = (n: number) => { const r = Math.round(n); const m100 = r % 100; if (m100 >= 11 && m100 <= 13) return `${r}th`; const m10 = r % 10; return `${r}${m10 === 1 ? "st" : m10 === 2 ? "nd" : m10 === 3 ? "rd" : "th"}`; };

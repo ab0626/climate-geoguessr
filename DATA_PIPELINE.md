@@ -107,11 +107,16 @@ Result: **210,218,209 clean hourly rows**, 3.06 GB Parquet (`data/interim/`).
 * **Precipitation on a valid day** with no AA1 report is treated as 0 mm (ASOS
   omits AA1 when there is nothing to report). Days that are *not* valid get null,
   not 0.
+* **Gauge plausibility flags**: `precip_stuck_gauge` (≥ 6 identical non-zero
+  1-h totals of ≥ 5 mm, e.g. Mena AR reporting 45.7 mm every hour →
+  1,097 mm/day) and `precip_implausible` (daily sum > 300 mm). Either sets
+  the day's precipitation to null, not the sum. Stations with ≥ 5 flagged days
+  lose all precipitation features (features/build.py).
 
-Result: **8,724,373 station-day rows**, 2,501 stations with data, 328 MB Parquet.
+Result: **8,724,373 station-day rows**, 2,501 stations with data, 336 MB Parquet.
 
-Runtime for parse → clean → aggregate: **361 s** on 8 cores, parent peak RSS
-2,398 MB, worst worker peak RSS 421 MB.
+Runtime for parse → clean → aggregate: **367 s** on 8 cores, parent peak RSS
+2,712 MB, worst worker peak RSS 408 MB.
 
 ## 6. Station selection for the climatology (`features/build.py`)
 
@@ -119,13 +124,14 @@ Runtime for parse → clean → aggregate: **361 s** on 8 cores, parent peak RSS
 | --- | ---: |
 | with any daily data | 2,501 |
 | dropped: < 70 % valid days over 2015–2024 | −201 |
-| dropped: a required feature is null | −454 |
-| **kept** | **1,846** |
+| dropped: a required feature is null | −473 |
+| **kept** | **1,827** |
 
-The 454 break down as (a station can hit both): 322 lack precipitation because
+The 473 break down as (a station can hit several): 322 lack precipitation because
 their AA1 section appears on < 2 % of valid days (no reporting gauge — their
-"0 in/yr" would be absence of data, not a desert), 294 lack dew point, 6 lack
-wind.
+"0 in/yr" would be absence of data, not a desert), 19 have an untrusted gauge
+(≥ 5 stuck/implausible days; 92 stuck and 236 implausible station-days were
+nulled overall), 294 lack dew point, 6 lack wind.
 
 Variable coverage over valid station-days (drives which variables became
 features):
@@ -148,7 +154,7 @@ Feature build time 0.66 s. Clustering ~ tens of seconds (`cluster_diagnostics.js
 
 | File | Size | Contents |
 | --- | ---: | --- |
-| `locations.parquet` | 530 KB | 1,846 stations: metadata, features, percentiles, cluster, PCA coords |
+| `locations.parquet` | 540 KB | 1,827 stations: metadata, features, percentiles, cluster, PCA coords |
 | `station_features.parquet` / `_all` | 353 / 445 KB | model table / every station with coverage columns |
 | `neighbors.parquet` | 370 KB | 10 nearest climate neighbours per station |
 | `pair_distance_quantiles.npy` | 6.8 MB | sorted pairwise climate distances (for similarity %) |

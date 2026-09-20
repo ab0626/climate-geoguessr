@@ -55,8 +55,8 @@
     "sky_cover_oktas": 194813165
   },
   "report_type_counts": {
-    "SOD  ": 5844727,
     "FM-15": 315630100,
+    "SOD  ": 5844727,
     "FM-16": 24466728,
     "FM-12": 4270983,
     "SOM  ": 117469,
@@ -106,12 +106,12 @@
   },
   "files": 24529,
   "raw_bytes_gz": 18680110212,
-  "processing_seconds": 361.1,
-  "peak_rss_mb_parent": 2397.7,
-  "peak_rss_mb_worker_max": 421.1,
+  "processing_seconds": 366.7,
+  "peak_rss_mb_parent": 2712.0,
+  "peak_rss_mb_worker_max": 408.4,
   "daily_rows": 8724373,
   "stations_with_data": 2501,
-  "interim_bytes_parquet": 3059542751,
-  "daily_bytes_parquet": 327852132,
+  "interim_bytes_parquet": 3059534168,
+  "daily_bytes_parquet": 336422805,
   "cpu_count": 8
 }
