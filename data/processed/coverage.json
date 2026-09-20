@@ -1,0 +1,29 @@
+{
+  "stations_with_any_data": 2501,
+  "stations_kept": 1846,
+  "stations_dropped_low_coverage": 201,
+  "stations_dropped_missing_feature": 454,
+  "stations_missing_each_feature": {
+    "annual_precip_in": 322,
+    "wet_days_per_year": 322,
+    "summer_precip_fraction": 322,
+    "frozen_precip_days_per_year": 322,
+    "summer_dewpoint_f": 294,
+    "annual_dewpoint_depression_f": 294,
+    "mean_wind_mph": 6
+  },
+  "min_valid_day_fraction": 0.7,
+  "window_days": 3652.5,
+  "variable_coverage_pct_of_valid_days": {
+    "temp": 100.0,
+    "dewpoint": 87.2,
+    "wind": 99.03,
+    "visibility": 83.62,
+    "slp": 57.58,
+    "sky": 76.55,
+    "snow_depth": 0.4,
+    "precip_24h": 4.17
+  },
+  "pct_valid_days_with_any_1h_precip_report": 55.65,
+  "feature_build_seconds": 0.66
+}

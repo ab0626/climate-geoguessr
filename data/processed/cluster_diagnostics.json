@@ -1,0 +1,542 @@
+{
+  "model_selection": [
+    {
+      "k": 3,
+      "kmeans_silhouette": 0.2836502032876653,
+      "kmeans_inertia": 15115.507700973858,
+      "kmeans_calinski_harabasz": 654.050518787115,
+      "ward_silhouette": 0.2488595272116285,
+      "gmm_bic": -930.1113287240601,
+      "gmm_silhouette": 0.2308834834163341
+    },
+    {
+      "k": 4,
+      "kmeans_silhouette": 0.21160642795161144,
+      "kmeans_inertia": 13348.298252080382,
+      "kmeans_calinski_harabasz": 574.7819481053981,
+      "ward_silhouette": 0.24455791132275406,
+      "gmm_bic": -4465.696040043061,
+      "gmm_silhouette": 0.25437361759898813
+    },
+    {
+      "k": 5,
+      "kmeans_silhouette": 0.21319871507310215,
+      "kmeans_inertia": 12060.757250586143,
+      "kmeans_calinski_harabasz": 525.9875902182074,
+      "ward_silhouette": 0.26390244177239763,
+      "gmm_bic": -6378.927858397072,
+      "gmm_silhouette": 0.1661474667160938
+    },
+    {
+      "k": 6,
+      "kmeans_silhouette": 0.22264823664236796,
+      "kmeans_inertia": 10922.090189566228,
+      "kmeans_calinski_harabasz": 502.76666049556894,
+      "ward_silhouette": 0.2115788130409723,
+      "gmm_bic": -8170.952376407593,
+      "gmm_silhouette": 0.17713903343988047
+    },
+    {
+      "k": 7,
+      "kmeans_silhouette": 0.23008122597188058,
+      "kmeans_inertia": 10012.726400569733,
+      "kmeans_calinski_harabasz": 484.61345833785543,
+      "ward_silhouette": 0.1942988460704164,
+      "gmm_bic": -8068.172367670702,
+      "gmm_silhouette": 0.17717171943053778
+    },
+    {
+      "k": 8,
+      "kmeans_silhouette": 0.23326563761740024,
+      "kmeans_inertia": 9251.068298209057,
+      "kmeans_calinski_harabasz": 470.9542336824869,
+      "ward_silhouette": 0.19181957428973384,
+      "gmm_bic": -9998.4482016666,
+      "gmm_silhouette": 0.1504995726913286
+    },
+    {
+      "k": 9,
+      "kmeans_silhouette": 0.22225236223461317,
+      "kmeans_inertia": 8653.039383261172,
+      "kmeans_calinski_harabasz": 456.1964986972675,
+      "ward_silhouette": 0.18709434753586648,
+      "gmm_bic": -10431.543451152596,
+      "gmm_silhouette": 0.16483342808705842
+    },
+    {
+      "k": 10,
+      "kmeans_silhouette": 0.22965751754914598,
+      "kmeans_inertia": 8171.674995649482,
+      "kmeans_calinski_harabasz": 441.17690715879604,
+      "ward_silhouette": 0.1986668875166493,
+      "gmm_bic": -9702.403055733585,
+      "gmm_silhouette": 0.1870547757105064
+    },
+    {
+      "k": 11,
+      "kmeans_silhouette": 0.23262056935788897,
+      "kmeans_inertia": 7797.127600044572,
+      "kmeans_calinski_harabasz": 424.72064781559925,
+      "ward_silhouette": 0.19832853477838328,
+      "gmm_bic": -10015.145320127962,
+      "gmm_silhouette": 0.1761835739950233
+    },
+    {
+      "k": 12,
+      "kmeans_silhouette": 0.22095081553171617,
+      "kmeans_inertia": 7512.309850105028,
+      "kmeans_calinski_harabasz": 406.8512566917972,
+      "ward_silhouette": 0.21119451857404753,
+      "gmm_bic": -10910.303551750347,
+      "gmm_silhouette": 0.17511977207956625
+    }
+  ],
+  "chosen_k": 8,
+  "k_rule": "argmax k-means silhouette, k>=5",
+  "n_locations": 1846,
+  "n_features": 14,
+  "features": [
+    "annual_mean_temp_f",
+    "winter_mean_temp_f",
+    "summer_mean_temp_f",
+    "seasonal_temp_range_f",
+    "diurnal_temp_range_f",
+    "hot_days_per_year",
+    "freeze_days_per_year",
+    "annual_precip_in",
+    "wet_days_per_year",
+    "summer_precip_fraction",
+    "frozen_precip_days_per_year",
+    "summer_dewpoint_f",
+    "annual_dewpoint_depression_f",
+    "mean_wind_mph"
+  ],
+  "normalisation": "z-score per feature (StandardScaler), equal weights",
+  "scaler_mean": {
+    "annual_mean_temp_f": 56.65395965383577,
+    "winter_mean_temp_f": 37.943263987095825,
+    "summer_mean_temp_f": 74.79561968445407,
+    "seasonal_temp_range_f": 36.85235569735825,
+    "diurnal_temp_range_f": 20.277164923503612,
+    "hot_days_per_year": 41.1675224619309,
+    "freeze_days_per_year": 87.45366157274765,
+    "annual_precip_in": 29.88615909060986,
+    "wet_days_per_year": 68.49406428859871,
+    "summer_precip_fraction": 0.2898394107207309,
+    "frozen_precip_days_per_year": 4.478975827119647,
+    "summer_dewpoint_f": 60.85251115049885,
+    "annual_dewpoint_depression_f": 12.470199059749834,
+    "mean_wind_mph": 7.2441891827574105
+  },
+  "scaler_scale": {
+    "annual_mean_temp_f": 9.085925235808626,
+    "winter_mean_temp_f": 12.813962321654936,
+    "summer_mean_temp_f": 6.530901949835327,
+    "seasonal_temp_range_f": 9.268089864077535,
+    "diurnal_temp_range_f": 4.029410281665114,
+    "hot_days_per_year": 38.89610943043899,
+    "freeze_days_per_year": 59.741831214669986,
+    "annual_precip_in": 17.237468217781366,
+    "wet_days_per_year": 28.118835279472876,
+    "summer_precip_fraction": 0.12104536201309457,
+    "frozen_precip_days_per_year": 6.466129078931346,
+    "summer_dewpoint_f": 9.724119871557768,
+    "annual_dewpoint_depression_f": 5.613580684149323,
+    "mean_wind_mph": 2.2754090830634612
+  },
+  "final_silhouette": 0.23326563761740024,
+  "min_centroid_separation_z": 2.7794267989279158,
+  "mean_centroid_separation_z": 5.007468092524952,
+  "pca_explained_variance_ratio": [
+    0.4103836651207553,
+    0.23470072037606743,
+    0.1118374701728724,
+    0.07360177744460109,
+    0.05957685320317998
+  ],
+  "pca_loadings_pc1": {
+    "annual_mean_temp_f": 0.4085545523886862,
+    "winter_mean_temp_f": 0.4035078794913908,
+    "summer_mean_temp_f": 0.3379785865775078,
+    "seasonal_temp_range_f": -0.319723891078915,
+    "diurnal_temp_range_f": -0.060397340982668975,
+    "hot_days_per_year": 0.2965150790759475,
+    "freeze_days_per_year": -0.40217261314390307,
+    "annual_precip_in": 0.161422683075662,
+    "wet_days_per_year": 0.022204500801336985,
+    "summer_precip_fraction": -0.10861550981434358,
+    "frozen_precip_days_per_year": -0.27805960775185967,
+    "summer_dewpoint_f": 0.26612697018761233,
+    "annual_dewpoint_depression_f": 0.006140142991808795,
+    "mean_wind_mph": -0.11821071524762011
+  },
+  "pca_loadings_pc2": {
+    "annual_mean_temp_f": 0.06810686971464339,
+    "winter_mean_temp_f": 0.032916429678504694,
+    "summer_mean_temp_f": 0.16107817182318163,
+    "seasonal_temp_range_f": 0.06799630409441332,
+    "diurnal_temp_range_f": 0.40373366314205184,
+    "hot_days_per_year": 0.29700617717736066,
+    "freeze_days_per_year": 0.013868515350586539,
+    "annual_precip_in": -0.40424569234703805,
+    "wet_days_per_year": -0.45046166833006046,
+    "summer_precip_fraction": -0.04414038790265066,
+    "frozen_precip_days_per_year": -0.1113419045085601,
+    "summer_dewpoint_f": -0.29479571380896763,
+    "annual_dewpoint_depression_f": 0.47367267702894933,
+    "mean_wind_mph": 0.14267587949375785
+  },
+  "stability": {
+    "subsample_80pct_ari_mean": 0.8828116704099425,
+    "subsample_80pct_ari_std": 0.1276437621872767,
+    "gaussian_noise_0.1sd_ari_mean": 0.9076334727035987,
+    "gaussian_noise_0.1sd_ari_std": 0.030863893286884395,
+    "reps": 25
+  },
+  "feature_ablation": {
+    "annual_mean_temp_f": {
+      "silhouette": 0.2292862957337479,
+      "ari_vs_full": 0.8442551420387377
+    },
+    "winter_mean_temp_f": {
+      "silhouette": 0.22625307843683873,
+      "ari_vs_full": 0.9453299612193278
+    },
+    "summer_mean_temp_f": {
+      "silhouette": 0.23445362255890015,
+      "ari_vs_full": 0.7984517247625297
+    },
+    "seasonal_temp_range_f": {
+      "silhouette": 0.22940780736691593,
+      "ari_vs_full": 0.8251946345561187
+    },
+    "diurnal_temp_range_f": {
+      "silhouette": 0.24858610152438465,
+      "ari_vs_full": 0.916916687943046
+    },
+    "hot_days_per_year": {
+      "silhouette": 0.2296837687704249,
+      "ari_vs_full": 0.8718373600092497
+    },
+    "freeze_days_per_year": {
+      "silhouette": 0.22737952576016865,
+      "ari_vs_full": 0.8575821989263366
+    },
+    "annual_precip_in": {
+      "silhouette": 0.21649190276324276,
+      "ari_vs_full": 0.5444686059570915
+    },
+    "wet_days_per_year": {
+      "silhouette": 0.21277415512747863,
+      "ari_vs_full": 0.5952380965344116
+    },
+    "summer_precip_fraction": {
+      "silhouette": 0.24593434148216595,
+      "ari_vs_full": 0.8284586128232143
+    },
+    "frozen_precip_days_per_year": {
+      "silhouette": 0.23061308253458143,
+      "ari_vs_full": 0.6196245695008757
+    },
+    "summer_dewpoint_f": {
+      "silhouette": 0.2308896030721844,
+      "ari_vs_full": 0.8218333916224809
+    },
+    "annual_dewpoint_depression_f": {
+      "silhouette": 0.2143080400900868,
+      "ari_vs_full": 0.6880241886992197
+    },
+    "mean_wind_mph": {
+      "silhouette": 0.26408986464396816,
+      "ari_vs_full": 0.8929044008799711
+    }
+  },
+  "between_within_f_ratio": {
+    "annual_mean_temp_f": 1041.5997686289206,
+    "winter_mean_temp_f": 1090.1974833891743,
+    "summer_mean_temp_f": 689.1685535153667,
+    "seasonal_temp_range_f": 718.7053669345648,
+    "diurnal_temp_range_f": 203.64960152986245,
+    "hot_days_per_year": 650.4025882974461,
+    "freeze_days_per_year": 1304.8938024410375,
+    "annual_precip_in": 399.229718211744,
+    "wet_days_per_year": 357.15499218285896,
+    "summer_precip_fraction": 180.60403228247017,
+    "frozen_precip_days_per_year": 411.5852310173834,
+    "summer_dewpoint_f": 857.5974158857264,
+    "annual_dewpoint_depression_f": 904.4516348098974,
+    "mean_wind_mph": 68.78512391152852
+  },
+  "geographic_signal": {
+    "method": "5-NN (distance weighted) regression of lat/lon from z-scored features, self excluded; median great-circle error",
+    "all_features_median_error_mi": 73.9461151261596,
+    "without_feature_median_error_mi": {
+      "annual_mean_temp_f": 73.92610568670695,
+      "winter_mean_temp_f": 73.92291623026414,
+      "summer_mean_temp_f": 74.58690299582939,
+      "seasonal_temp_range_f": 77.85878372786858,
+      "diurnal_temp_range_f": 74.05821677724406,
+      "hot_days_per_year": 73.66608185918523,
+      "freeze_days_per_year": 73.30566264373522,
+      "annual_precip_in": 73.5397108913094,
+      "wet_days_per_year": 77.25068450300722,
+      "summer_precip_fraction": 79.1925454993302,
+      "frozen_precip_days_per_year": 72.85611235948983,
+      "summer_dewpoint_f": 75.52055013705296,
+      "annual_dewpoint_depression_f": 76.00264761711884,
+      "mean_wind_mph": 70.25234267259403
+    },
+    "single_feature_median_error_mi": {
+      "annual_mean_temp_f": 586.9411712000468,
+      "winter_mean_temp_f": 561.8620189870501,
+      "summer_mean_temp_f": 529.9463094886041,
+      "seasonal_temp_range_f": 539.158410528375,
+      "diurnal_temp_range_f": 611.2762818577685,
+      "hot_days_per_year": 591.7376803287883,
+      "freeze_days_per_year": 547.7040021306457,
+      "annual_precip_in": 573.1107179660239,
+      "wet_days_per_year": 566.7804526421041,
+      "summer_precip_fraction": 544.307144716863,
+      "frozen_precip_days_per_year": 620.4458839671845,
+      "summer_dewpoint_f": 452.76972256268544,
+      "annual_dewpoint_depression_f": 577.7049037365164,
+      "mean_wind_mph": 725.05163175894
+    }
+  },
+  "feature_correlation": {
+    "annual_mean_temp_f": {
+      "annual_mean_temp_f": 1.0,
+      "winter_mean_temp_f": 0.961819821011686,
+      "summer_mean_temp_f": 0.8783463413405892,
+      "seasonal_temp_range_f": -0.7108615917621334,
+      "diurnal_temp_range_f": -0.06530172299797395,
+      "hot_days_per_year": 0.780220755043616,
+      "freeze_days_per_year": -0.9262625859578474,
+      "annual_precip_in": 0.2948425612745878,
+      "wet_days_per_year": -0.0341501717941918,
+      "summer_precip_fraction": -0.18189893316957625,
+      "frozen_precip_days_per_year": -0.6211089946632858,
+      "summer_dewpoint_f": 0.5868233460427388,
+      "annual_dewpoint_depression_f": 0.13718270779586983,
+      "mean_wind_mph": -0.18932779032265154
+    },
+    "winter_mean_temp_f": {
+      "annual_mean_temp_f": 0.9618198210116858,
+      "winter_mean_temp_f": 1.0,
+      "summer_mean_temp_f": 0.7226523174331088,
+      "seasonal_temp_range_f": -0.8733612871031082,
+      "diurnal_temp_range_f": -0.10770941763099512,
+      "hot_days_per_year": 0.6816371022207809,
+      "freeze_days_per_year": -0.9477891060845872,
+      "annual_precip_in": 0.30231599186370334,
+      "wet_days_per_year": 0.015488387427244751,
+      "summer_precip_fraction": -0.30222257167867445,
+      "frozen_precip_days_per_year": -0.5796211779977898,
+      "summer_dewpoint_f": 0.5055242347250696,
+      "annual_dewpoint_depression_f": 0.09254255918798474,
+      "mean_wind_mph": -0.25654005869222146
+    },
+    "summer_mean_temp_f": {
+      "annual_mean_temp_f": 0.8783463413405892,
+      "winter_mean_temp_f": 0.7226523174331088,
+      "summer_mean_temp_f": 1.0,
+      "seasonal_temp_range_f": -0.2944660288617932,
+      "diurnal_temp_range_f": 0.09334284301003896,
+      "hot_days_per_year": 0.8412260042499576,
+      "freeze_days_per_year": -0.706843717381161,
+      "annual_precip_in": 0.1880907207277114,
+      "wet_days_per_year": -0.1434904327543996,
+      "summer_precip_fraction": 0.0018742497056411095,
+      "frozen_precip_days_per_year": -0.5660113938783797,
+      "summer_dewpoint_f": 0.5308547892775621,
+      "annual_dewpoint_depression_f": 0.28791030338504586,
+      "mean_wind_mph": -0.03185960765354576
+    },
+    "seasonal_temp_range_f": {
+      "annual_mean_temp_f": -0.7108615917621335,
+      "winter_mean_temp_f": -0.8733612871031082,
+      "summer_mean_temp_f": -0.2944660288617932,
+      "seasonal_temp_range_f": 1.0,
+      "diurnal_temp_range_f": 0.21469336225803315,
+      "hot_days_per_year": -0.3496413652667407,
+      "freeze_days_per_year": 0.8123148342950134,
+      "annual_precip_in": -0.2854378532174493,
+      "wet_days_per_year": -0.12252681799901377,
+      "summer_precip_fraction": 0.41917042716200614,
+      "frozen_precip_days_per_year": 0.40252943966884197,
+      "summer_dewpoint_f": -0.3248574368865282,
+      "annual_dewpoint_depression_f": 0.07493206317112468,
+      "mean_wind_mph": 0.33223919032837523
+    },
+    "diurnal_temp_range_f": {
+      "annual_mean_temp_f": -0.06530172299797395,
+      "winter_mean_temp_f": -0.10770941763099512,
+      "summer_mean_temp_f": 0.09334284301003896,
+      "seasonal_temp_range_f": 0.21469336225803315,
+      "diurnal_temp_range_f": 1.0,
+      "hot_days_per_year": 0.3615476354916463,
+      "freeze_days_per_year": 0.2404562448913915,
+      "annual_precip_in": -0.41238419231715306,
+      "wet_days_per_year": -0.4395696702637368,
+      "summer_precip_fraction": -0.01787491119681647,
+      "frozen_precip_days_per_year": -0.011874058535436128,
+      "summer_dewpoint_f": -0.4640133137576192,
+      "annual_dewpoint_depression_f": 0.6081269194030182,
+      "mean_wind_mph": -0.008174230787515285
+    },
+    "hot_days_per_year": {
+      "annual_mean_temp_f": 0.780220755043616,
+      "winter_mean_temp_f": 0.6816371022207809,
+      "summer_mean_temp_f": 0.8412260042499577,
+      "seasonal_temp_range_f": -0.3496413652667407,
+      "diurnal_temp_range_f": 0.36154763549164637,
+      "hot_days_per_year": 1.0,
+      "freeze_days_per_year": -0.621752910578779,
+      "annual_precip_in": -0.007161247514771004,
+      "wet_days_per_year": -0.30020589320464725,
+      "summer_precip_fraction": -0.13378259095531755,
+      "frozen_precip_days_per_year": -0.4365589858982326,
+      "summer_dewpoint_f": 0.21971225686044146,
+      "annual_dewpoint_depression_f": 0.4765233920305878,
+      "mean_wind_mph": 0.004658950514696765
+    },
+    "freeze_days_per_year": {
+      "annual_mean_temp_f": -0.9262625859578474,
+      "winter_mean_temp_f": -0.9477891060845872,
+      "summer_mean_temp_f": -0.706843717381161,
+      "seasonal_temp_range_f": 0.8123148342950134,
+      "diurnal_temp_range_f": 0.2404562448913915,
+      "hot_days_per_year": -0.6217529105787789,
+      "freeze_days_per_year": 1.0,
+      "annual_precip_in": -0.33864351155988415,
+      "wet_days_per_year": -0.05599587966177009,
+      "summer_precip_fraction": 0.3509058398438171,
+      "frozen_precip_days_per_year": 0.6306359513833834,
+      "summer_dewpoint_f": -0.5599669774630015,
+      "annual_dewpoint_depression_f": -0.015699802280430723,
+      "mean_wind_mph": 0.267299455777631
+    },
+    "annual_precip_in": {
+      "annual_mean_temp_f": 0.2948425612745878,
+      "winter_mean_temp_f": 0.30231599186370334,
+      "summer_mean_temp_f": 0.18809072072771138,
+      "seasonal_temp_range_f": -0.2854378532174493,
+      "diurnal_temp_range_f": -0.41238419231715306,
+      "hot_days_per_year": -0.007161247514771004,
+      "freeze_days_per_year": -0.33864351155988415,
+      "annual_precip_in": 1.0,
+      "wet_days_per_year": 0.8094992868962996,
+      "summer_precip_fraction": -0.01109583982452859,
+      "frozen_precip_days_per_year": -0.03020383948012909,
+      "summer_dewpoint_f": 0.5805453495812213,
+      "annual_dewpoint_depression_f": -0.47037003857723836,
+      "mean_wind_mph": -0.2585808632171998
+    },
+    "wet_days_per_year": {
+      "annual_mean_temp_f": -0.0341501717941918,
+      "winter_mean_temp_f": 0.015488387427244751,
+      "summer_mean_temp_f": -0.1434904327543996,
+      "seasonal_temp_range_f": -0.12252681799901377,
+      "diurnal_temp_range_f": -0.4395696702637367,
+      "hot_days_per_year": -0.30020589320464725,
+      "freeze_days_per_year": -0.055995879661770095,
+      "annual_precip_in": 0.8094992868962996,
+      "wet_days_per_year": 1.0,
+      "summer_precip_fraction": 0.023240824976782096,
+      "frozen_precip_days_per_year": 0.287202218364372,
+      "summer_dewpoint_f": 0.33196783392809537,
+      "annual_dewpoint_depression_f": -0.49860616701836763,
+      "mean_wind_mph": -0.2433604586953617
+    },
+    "summer_precip_fraction": {
+      "annual_mean_temp_f": -0.18189893316957625,
+      "winter_mean_temp_f": -0.30222257167867445,
+      "summer_mean_temp_f": 0.0018742497056411095,
+      "seasonal_temp_range_f": 0.41917042716200614,
+      "diurnal_temp_range_f": -0.01787491119681647,
+      "hot_days_per_year": -0.13378259095531755,
+      "freeze_days_per_year": 0.3509058398438172,
+      "annual_precip_in": -0.01109583982452859,
+      "wet_days_per_year": 0.023240824976782096,
+      "summer_precip_fraction": 1.0,
+      "frozen_precip_days_per_year": 0.054503913159494675,
+      "summer_dewpoint_f": 0.17223843670847389,
+      "annual_dewpoint_depression_f": -0.09407035417998082,
+      "mean_wind_mph": 0.29512010874313027
+    },
+    "frozen_precip_days_per_year": {
+      "annual_mean_temp_f": -0.6211089946632858,
+      "winter_mean_temp_f": -0.5796211779977898,
+      "summer_mean_temp_f": -0.5660113938783797,
+      "seasonal_temp_range_f": 0.40252943966884197,
+      "diurnal_temp_range_f": -0.011874058535436128,
+      "hot_days_per_year": -0.4365589858982326,
+      "freeze_days_per_year": 0.6306359513833834,
+      "annual_precip_in": -0.03020383948012909,
+      "wet_days_per_year": 0.287202218364372,
+      "summer_precip_fraction": 0.05450391315949468,
+      "frozen_precip_days_per_year": 1.0,
+      "summer_dewpoint_f": -0.42081034567110676,
+      "annual_dewpoint_depression_f": -0.04969635581828828,
+      "mean_wind_mph": 0.10822444248727085
+    },
+    "summer_dewpoint_f": {
+      "annual_mean_temp_f": 0.5868233460427389,
+      "winter_mean_temp_f": 0.5055242347250696,
+      "summer_mean_temp_f": 0.5308547892775621,
+      "seasonal_temp_range_f": -0.3248574368865282,
+      "diurnal_temp_range_f": -0.4640133137576192,
+      "hot_days_per_year": 0.21971225686044146,
+      "freeze_days_per_year": -0.5599669774630015,
+      "annual_precip_in": 0.5805453495812212,
+      "wet_days_per_year": 0.33196783392809537,
+      "summer_precip_fraction": 0.1722384367084739,
+      "frozen_precip_days_per_year": -0.4208103456711068,
+      "summer_dewpoint_f": 1.0,
+      "annual_dewpoint_depression_f": -0.6178086345496443,
+      "mean_wind_mph": -0.18514915606769763
+    },
+    "annual_dewpoint_depression_f": {
+      "annual_mean_temp_f": 0.13718270779586983,
+      "winter_mean_temp_f": 0.09254255918798474,
+      "summer_mean_temp_f": 0.28791030338504586,
+      "seasonal_temp_range_f": 0.07493206317112468,
+      "diurnal_temp_range_f": 0.6081269194030182,
+      "hot_days_per_year": 0.4765233920305878,
+      "freeze_days_per_year": -0.015699802280430723,
+      "annual_precip_in": -0.4703700385772384,
+      "wet_days_per_year": -0.49860616701836763,
+      "summer_precip_fraction": -0.09407035417998083,
+      "frozen_precip_days_per_year": -0.049696355818288275,
+      "summer_dewpoint_f": -0.6178086345496443,
+      "annual_dewpoint_depression_f": 1.0,
+      "mean_wind_mph": 0.17851957437717916
+    },
+    "mean_wind_mph": {
+      "annual_mean_temp_f": -0.18932779032265154,
+      "winter_mean_temp_f": -0.25654005869222146,
+      "summer_mean_temp_f": -0.03185960765354576,
+      "seasonal_temp_range_f": 0.33223919032837523,
+      "diurnal_temp_range_f": -0.008174230787515287,
+      "hot_days_per_year": 0.004658950514696765,
+      "freeze_days_per_year": 0.26729945577763103,
+      "annual_precip_in": -0.2585808632171998,
+      "wet_days_per_year": -0.2433604586953617,
+      "summer_precip_fraction": 0.29512010874313027,
+      "frozen_precip_days_per_year": 0.10822444248727085,
+      "summer_dewpoint_f": -0.18514915606769763,
+      "annual_dewpoint_depression_f": 0.17851957437717916,
+      "mean_wind_mph": 1.0
+    }
+  },
+  "pair_distance_quantiles": {
+    "0.01": 1.204831117184134,
+    "0.05": 1.869725475795477,
+    "0.1": 2.3659088933733026,
+    "0.25": 3.4515877718951637,
+    "0.5": 4.803181755350832,
+    "0.75": 6.172448770965646,
+    "0.9": 7.452304847697999
+  },
+  "clustering_seconds": 12.6
+}
