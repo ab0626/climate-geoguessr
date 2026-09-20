@@ -1,8 +1,8 @@
 """Player-facing clue generation.
 
 The deterministic template path is the default and the fallback. Every phrase is
-a function of the location's percentile rank within the processed feature table,
-so the clue can never state something the data does not support. An optional
+a function of measured features and their ranks within the processed table.
+An optional
 LLM path (OPENAI_API_KEY set) rewrites the template clue for variety but is
 constrained to the same facts and verified with `verify_clue` before use.
 """
@@ -28,7 +28,7 @@ def band(pct: float, low: str, mid_low: str, mid: str, mid_high: str, high: str)
 
 
 def template_clue(loc: dict) -> tuple[str, list[dict]]:
-    """Return (clue text, list of facts used) from percentile columns pct_*."""
+    """Return a climate description and the measured facts used to build it."""
     p = {k[4:]: v for k, v in loc.items() if k.startswith("pct_")}
     facts: list[dict] = []
 
@@ -49,94 +49,91 @@ def template_clue(loc: dict) -> tuple[str, list[dict]]:
         "summer_mean_temp_f",
         band(
             p["summer_mean_temp_f"],
-            "cool summers",
-            "mild summers",
-            "warm summers",
-            "hot summers",
-            "very hot summers",
+            "summer keeps the heat on a short leash",
+            "summer warmth stays gentle",
+            "summer brings a warm glow",
+            "summer turns up the heat",
+            "summer heat takes centre stage",
         ),
     )
     winter = use(
         "winter_mean_temp_f",
         band(
             p["winter_mean_temp_f"],
-            "long, frigid winters",
-            "cold winters",
-            "cool winters",
-            "mild winters",
-            "winters that barely register",
+            "winter brings a deep chill",
+            "winter has a sharp bite",
+            "winter keeps a cool edge",
+            "winter takes a gentler turn",
+            "winter is among the mildest in this station network",
         ),
     )
     humid = use(
         "summer_dewpoint_f",
         band(
             p["summer_dewpoint_f"],
-            "summer air is bone dry",
-            "summer air is fairly dry",
-            "summer humidity is moderate",
-            "summers are humid",
-            "summers are oppressively humid",
+            "the summer air feels crisp and dry",
+            "the summer air leans dry",
+            "the summer air sits between dry and muggy",
+            "the summer air carries a humid weight",
+            "the summer air feels thick with moisture",
         ),
     )
     precip = use(
         "annual_precip_in",
         band(
             p["annual_precip_in"],
-            "it is one of the driest places in our table",
-            "it is drier than most of the country",
-            "it gets about average annual precipitation",
-            "it is wetter than most of the country",
-            "it is among the wettest places in our table",
+            "Precipitation is a small budget here, among the lowest in our station network",
+            "The annual water budget is leaner than at most stations",
+            "The annual water budget sits near the middle of our station network",
+            "The annual water budget is more generous than at most stations",
+            "This is one of the wettest spots in our station network",
         ),
     )
-    snow = use(
-        "frozen_precip_days_per_year",
-        band(
+    accents = {
+        "frozen_precip_days_per_year": band(
             p["frozen_precip_days_per_year"],
-            "frozen precipitation is essentially unknown",
-            "frozen precipitation is rare",
-            "there are some frozen-precipitation days each winter",
-            "frozen precipitation is frequent in winter",
-            "frozen precipitation is a regular part of winter",
+            "Cold and wet rarely meet here compared with other stations",
+            "Cold, wet days are less common here than at most stations",
+            "Cold, wet days occur at a fairly typical rate",
+            "Cold and wet meet more often here than at most stations",
+            "Cold, wet days are a defining clue, among the most common in our network",
         ),
-    )
-    wind = use(
-        "mean_wind_mph",
-        band(
+        "mean_wind_mph": band(
             p["mean_wind_mph"],
-            "winds are calm",
-            "winds are light",
-            "winds are moderate",
-            "it is breezy",
-            "it is persistently windy",
+            "The wind is a quieter presence than at most stations",
+            "Winds tend toward the lighter side",
+            "The wind sits near the middle of the pack",
+            "A stronger-than-usual breeze adds to the feel of this place",
+            "Wind is a signature here, with some of the strongest averages in our network",
         ),
-    )
-    diurnal = use(
-        "diurnal_temp_range_f",
-        band(
+        "diurnal_temp_range_f": band(
             p["diurnal_temp_range_f"],
-            "almost no day-night temperature swing",
-            "small day-night temperature swings",
-            "typical day-night swings",
-            "large day-night temperature swings",
-            "huge day-night temperature swings",
+            "Daytime warmth gives way to only a small temperature drop",
+            "The temperature takes a modest step down after daytime warmth",
+            "The day-to-night temperature swing is near the middle of the pack",
+            "Daytime warmth gives way to a pronounced temperature drop",
+            "The leap from daytime warmth to the coolest hours is unusually large",
         ),
-    )
+    }
+    accent_feature = max(accents, key=lambda feature: abs(p[feature] - 50))
+    accent = use(accent_feature, accents[accent_feature])
+    share = loc["summer_precip_fraction"]
+    if share < 0.15:
+        season_phrase = "summer receives only a small slice of the year's precipitation"
+    elif share < 0.35:
+        season_phrase = "summer takes a modest share of the year's precipitation"
+    elif share <= 0.5:
+        season_phrase = "a sizeable share of the year's precipitation arrives in summer"
+    else:
+        season_phrase = "more than half the year's precipitation arrives in summer"
     seasonal = use(
         "summer_precip_fraction",
-        band(
-            p["summer_precip_fraction"],
-            "summers are the dry season",
-            "most rain falls outside summer",
-            "rain is spread through the year",
-            "summer is the wettest season",
-            "rain is heavily concentrated in summer",
-        ),
+        season_phrase,
     )
     text = (
-        f"This place has {summer} and {winter}; {humid}. "
-        f"{precip[0].upper() + precip[1:]}, and {seasonal}. "
-        f"{snow[0].upper() + snow[1:]}. {wind[0].upper() + wind[1:]}, with {diurnal}."
+        f"Picture a place where {summer}, while {winter}. "
+        f"{humid[0].upper() + humid[1:]}. "
+        f"{precip}; {seasonal}. {accent}."
     )
     return text, facts
 

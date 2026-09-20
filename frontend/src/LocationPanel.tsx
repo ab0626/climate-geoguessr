@@ -1,11 +1,12 @@
-import { Fragment, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { api, CLUSTER_COLORS, fmt, fmtInt, ordinal, type FeatureDef, type Location } from "./api";
+import { distinctiveFeatures, FEATURE_COPY, featureLabel } from "./climate";
+import { FeatureDescription } from "./FeatureDescription";
 
 let defsCache: Record<string, FeatureDef> | null = null;
 
 export function LocationPanel({ location }: { location: Location }) {
   const [defs, setDefs] = useState<Record<string, FeatureDef> | null>(defsCache);
-  const [open, setOpen] = useState<string | null>(null);
   useEffect(() => {
     if (!defs) api.pipeline().then((p) => { defsCache = p.feature_defs; setDefs(p.feature_defs); });
   }, [defs]);
@@ -14,18 +15,68 @@ export function LocationPanel({ location }: { location: Location }) {
   return (
     <>
       <div className="card">
-        <h3>Location</h3>
+        <div className="tag">Station climate</div>
+        <h3>{location.name}{location.state ? `, ${location.state}` : ""}</h3>
+        <p className="muted small"><span className="dot" style={{ background: CLUSTER_COLORS[location.cluster] }} />Group {location.cluster} · {fmt(100 * (c.valid_day_fraction as number))}% day coverage</p>
+        <details className="disclosure"><summary>Station details</summary>
         <table className="tbl kv">
           <tbody>
             <tr><td>Station</td><td>{location.name}{location.state ? `, ${location.state}` : ""} · ISD {location.station_id}</td></tr>
             <tr><td>Coordinates</td><td>{location.lat.toFixed(3)}, {location.lon.toFixed(3)}{location.elev_m != null ? ` · ${fmtInt(location.elev_m)} m` : ""}</td></tr>
             <tr><td>Representation</td><td>single ISD weather station (see Explore → Methodology for why)</td></tr>
-            <tr><td>Cluster</td><td><span style={{ color: CLUSTER_COLORS[location.cluster] }}>#{location.cluster}</span> · silhouette {fmt(location.silhouette, 2)}</td></tr>
+            <tr><td>Cluster fit (silhouette)</td><td>{fmt(location.silhouette, 2)} <span className="muted small">· near 1 = distinct, near 0 = overlapping, negative = closer to another group</span></td></tr>
           </tbody>
         </table>
+        </details>
       </div>
       <div className="card">
-        <h3>Data quality</h3>
+        <h3>What stands out here</h3>
+        <p className="muted small">Three distinguishing features compared with the other stations.</p>
+        <div className="fingerprint-highlights">
+          {distinctiveFeatures(location.percentiles, 50).map(([key, percentile]) => (
+            <details className="fingerprint-item" key={key}>
+              <summary>
+                <span>{featureLabel(key)}{key === "frozen_precip_days_per_year" && <span className="muted small"> · proxy</span>}</span>
+                <b>{fmt(location.features[key], key === "summer_precip_fraction" ? 2 : 1)} {defs?.[key]?.unit}</b>
+                <span className="muted small">{ordinal(percentile)} percentile</span>
+              </summary>
+              <FeatureDescription feature={key} definition={defs?.[key]} />
+            </details>
+          ))}
+        </div>
+        <details className="disclosure">
+          <summary>All {Object.keys(location.features).length} features &amp; sources</summary>
+          <p className="muted small">A 90th percentile value is higher than roughly 90% of the stations. Open a feature for its definition.</p>
+          {Object.entries(location.features).map(([key, value]) => (
+            <details className="fingerprint-item" key={key}>
+              <summary title={FEATURE_COPY[key]?.detail}>
+                <span>{featureLabel(key)}{key === "frozen_precip_days_per_year" && <span className="muted small"> · proxy</span>}</span>
+                <b>{fmt(value, key === "summer_precip_fraction" ? 2 : 1)} {defs?.[key]?.unit}</b>
+                <span className="muted small">{ordinal(location.percentiles[key])} pct</span>
+              </summary>
+              <FeatureDescription feature={key} definition={defs?.[key]} />
+            </details>
+          ))}
+        </details>
+      </div>
+      {location.neighbors && (
+        <div className="card">
+          <h3>Nearest climate neighbours</h3>
+          <p className="muted small">Similarity is the share of station pairs less alike than this pair.</p>
+          <div className="table-scroll">
+          <table className="tbl">
+            <thead><tr><th>#</th><th>Station</th><th>Similarity</th><th>Miles apart</th></tr></thead>
+            <tbody>
+              {location.neighbors.map((n) => (
+                <tr key={n.neighbor_id}><td>{n.rank}</td><td><span className="dot" style={{ background: CLUSTER_COLORS[n.cluster] }} /> {n.name}{n.state ? `, ${n.state}` : ""}</td><td>{fmt(n.similarity_pct)}%</td><td>{fmtInt(n.geo_distance_mi)} mi</td></tr>
+              ))}
+            </tbody>
+          </table>
+          </div>
+        </div>
+      )}
+      <details className="card disclosure">
+        <summary>Data quality &amp; observation coverage</summary>
         <table className="tbl kv">
           <tbody>
             <tr><td>Raw hourly reports</td><td>{fmtInt(c.n_hourly_reports as number)}</td></tr>
@@ -40,46 +91,7 @@ export function LocationPanel({ location }: { location: Location }) {
             <tr><td>Days with a 24-h AA1 total</td><td>{fmtInt(c.n_precip_24h_days as number)} <span className="muted">(not used; 24-h windows straddle local days)</span></td></tr>
           </tbody>
         </table>
-      </div>
-      <div className="card">
-        <h3>Climate fingerprint</h3>
-        <table className="tbl">
-          <thead><tr><th>Feature</th><th>Value</th><th>Percentile</th><th></th></tr></thead>
-          <tbody>
-            {Object.entries(location.features).map(([k, v]) => (
-              <Fragment key={k}>
-                <tr className="clickable" onClick={() => setOpen(open === k ? null : k)}>
-                  <td>{defs?.[k]?.label ?? k}</td>
-                  <td>{fmt(v, k === "summer_precip_fraction" ? 2 : 1)} {defs?.[k]?.unit}</td>
-                  <td><div className="bar" style={{ width: `${location.percentiles[k]}%` }} /> {ordinal(location.percentiles[k])}</td>
-                  <td className="muted small">{open === k ? "▲" : "▼ provenance"}</td>
-                </tr>
-                {open === k && defs?.[k] && (
-                  <tr key={`${k}-p`} className="prov"><td colSpan={4}>
-                    <div><b>Source fields:</b> {defs[k].fields.join("; ")}</div>
-                    <div><b>Aggregation:</b> {defs[k].aggregation}</div>
-                    <div><b>Missing data:</b> {defs[k].missing}</div>
-                    <div><b>Window:</b> 2015–2024 · <b>Geographic unit:</b> station · <b>Dataset:</b> NOAA ISD (noaa-isd-pds S3)</div>
-                  </td></tr>
-                )}
-              </Fragment>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      {location.neighbors && (
-        <div className="card">
-          <h3>Nearest climate neighbours</h3>
-          <table className="tbl">
-            <thead><tr><th>#</th><th>Station</th><th>Similarity</th><th>Geo distance</th></tr></thead>
-            <tbody>
-              {location.neighbors.map((n) => (
-                <tr key={n.neighbor_id}><td>{n.rank}</td><td><span className="dot" style={{ background: CLUSTER_COLORS[n.cluster] }} /> {n.name}{n.state ? `, ${n.state}` : ""}</td><td>{fmt(n.similarity_pct)}%</td><td>{fmtInt(n.geo_distance_mi)} mi</td></tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+      </details>
     </>
   );
 }

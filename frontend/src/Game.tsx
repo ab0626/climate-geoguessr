@@ -3,6 +3,7 @@ import { CircleMarker, MapContainer, Marker, Polyline, TileLayer, useMapEvents }
 import L from "leaflet";
 import { api, CLUSTER_COLORS, fmt, fmtInt, ordinal, type Result, type Round } from "./api";
 import { LocationPanel } from "./LocationPanel";
+import { FEATURE_COPY, featureLabel } from "./climate";
 
 const US_CENTER: [number, number] = [38.5, -96.5];
 const pin = (color: string) =>
@@ -92,7 +93,7 @@ export function Game({ onOpenExplore }: { onOpenExplore: (stationId: string) => 
               <h3>Signal found</h3>
               <ul className="facts">
                 {result.clue_facts.slice(0, 5).map((f) => (
-                  <li key={f.feature}><span>{f.label}</span><b>{ordinal(f.percentile)} percentile</b><span className="muted">{fmt(f.value)} {f.unit}</span></li>
+                  <li key={f.feature}><span title={FEATURE_COPY[f.feature]?.detail}>{featureLabel(f.feature)}{f.feature === "frozen_precip_days_per_year" && <span className="muted small"> · proxy</span>}</span><b>{ordinal(f.percentile)} percentile</b><span className="muted">{fmt(f.value)} {f.unit}</span></li>
                 ))}
               </ul>
               <div className="row between" style={{ marginTop: 8 }}>
@@ -116,7 +117,7 @@ export function Game({ onOpenExplore }: { onOpenExplore: (stationId: string) => 
                     <thead><tr><th>Feature</th><th>Target</th><th>Guess</th><th>gap (sd)</th></tr></thead>
                     <tbody>
                       {result.per_feature.map((f) => (
-                        <tr key={f.feature}><td>{f.label}</td><td>{fmt(f.target)} {f.unit}</td><td>{fmt(f.guess)} {f.unit}</td><td><div className="bar" style={{ width: `${Math.min(f.z_gap, 3) / 3 * 100}%` }} /> {fmt(f.z_gap, 2)}</td></tr>
+                        <tr key={f.feature}><td title={FEATURE_COPY[f.feature]?.detail}>{featureLabel(f.feature)}{f.feature === "frozen_precip_days_per_year" ? " (proxy)" : ""}</td><td>{fmt(f.target)} {f.unit}</td><td>{fmt(f.guess)} {f.unit}</td><td><div className="bar" style={{ width: `${Math.min(f.z_gap, 3) / 3 * 100}%` }} /> {fmt(f.z_gap, 2)}</td></tr>
                       ))}
                     </tbody>
                   </table>

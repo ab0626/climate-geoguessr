@@ -100,11 +100,22 @@ absorbs click imprecision at continental zoom.
 
 ## Clues (`backend/clue.py`)
 
-Deterministic: each of temperature (summer & winter), humidity, precipitation,
-seasonality, snow proxy, wind and diurnal range is mapped to a phrase by the
-station's **percentile rank** within the 1,827-station table (bands at 15/35/65/85).
-The list of (feature, value, percentile) facts used is returned with the clue and
-shown after the reveal as "Signal found".
+Deterministic: summer and winter temperature, summer humidity and annual
+precipitation are mapped to descriptive phrases by the station's **percentile
+rank** within the processed table (bands at 15/35/65/85). The final detail uses
+whichever of the snow proxy, wind or diurnal range lies furthest from the 50th
+percentile. The snow proxy is described as cold, wet days, without asserting
+observed snowfall or which season those days occurred in.
+
+Precipitation seasonality uses the **actual June–August fraction**, with cutoffs
+at 0.15, 0.35 and 0.50. A high percentile alone cannot establish that most
+precipitation falls in summer. All six (feature, value, percentile, phrase)
+facts are returned; the result highlights five, and Advanced Metrics retains
+the full feature profile.
+
+The explorer uses short display names with definitions and provenance available
+on expansion. “Snow days” retains a visible proxy label in its description and
+station profile. These display names do not change the underlying features.
 
 Optional LLM rewrite (only if `OPENAI_API_KEY` is set): the model is given the
 template sentence and the facts, asked to rephrase without adding information.
