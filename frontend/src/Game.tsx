@@ -24,12 +24,13 @@ export function Game({ onOpenExplore }: { onOpenExplore: (stationId: string) => 
   const [totals, setTotals] = useState({ rounds: 0, score: 0 });
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [timedOut, setTimedOut] = useState(false);
   const timer = useRef<number | null>(null);
 
   const start = async () => {
     setBusy(true);
     const r = await api.newRound();
-    setRound(r); setGuess(null); setResult(null); setShowAdvanced(false); setLeft(r.seconds); setPhase("guessing"); setBusy(false);
+    setRound(r); setGuess(null); setResult(null); setShowAdvanced(false); setTimedOut(false); setLeft(r.seconds); setPhase("guessing"); setBusy(false);
   };
 
   useEffect(() => {
@@ -47,9 +48,11 @@ export function Game({ onOpenExplore }: { onOpenExplore: (stationId: string) => 
     if (!round || phase !== "guessing") return;
     const g = guess ?? (timeout ? US_CENTER : null);
     if (!g) return;
+    const noGuess = timeout && !guess;
     setBusy(true);
-    const res = await api.guess(round.round_id, g[0], g[1]);
-    setResult(res); setPhase("result"); setBusy(false);
+    const raw = await api.guess(round.round_id, g[0], g[1]);
+    const res = noGuess ? { ...raw, score: 0 } : raw;
+    setTimedOut(noGuess); setResult(res); setPhase("result"); setBusy(false);
     setTotals((t) => ({ rounds: t.rounds + 1, score: t.score + res.score }));
   };
 
@@ -77,7 +80,7 @@ export function Game({ onOpenExplore }: { onOpenExplore: (stationId: string) => 
           <>
             <div className="card score-card">
               <div className="score">{result.score.toLocaleString()} <span className="muted">/ {result.max_score.toLocaleString()}</span></div>
-              <div className="big">{fmtInt(result.distance_mi)} miles away</div>
+              <div className="big">{timedOut ? "Time's up — no guess placed" : `${fmtInt(result.distance_mi)} miles away`}</div>
               <div className="muted">Target: <b>{t.name}</b>{t.state ? `, ${t.state}` : ""} · station {t.station_id}</div>
               <div className="row gap" style={{ marginTop: 10 }}>
                 <button className="primary" onClick={start} disabled={busy}>Next round</button>
@@ -96,16 +99,18 @@ export function Game({ onOpenExplore }: { onOpenExplore: (stationId: string) => 
                 <span>Climate cluster <b style={{ color: CLUSTER_COLORS[result.cluster.cluster] }}>#{result.cluster.cluster}</b> · {result.cluster.size} locations</span>
               </div>
               <div className="muted small">{result.cluster.traits.slice(0, 3).join(" · ")}</div>
+              {!timedOut && (<>
               <div className="sim">
                 <div><div className="muted small">Geographic distance</div><b>{fmtInt(result.distance_mi)} mi</b></div>
                 <div><div className="muted small">Climate similarity (guess vs target)</div><b>{fmt(result.climate_similarity_pct)}%</b></div>
                 <div><div className="muted small">Same cluster?</div><b>{result.same_cluster ? "yes" : "no"}</b></div>
               </div>
               <p className="muted small">Similarity = share of all {"station"} pairs whose climate distance (Euclidean, z-scored features) is larger than this pair's. Your guess is represented by the nearest station, {result.nearest_station_to_guess.name} ({fmtInt(result.nearest_station_to_guess.distance_from_guess_mi)} mi from your click).</p>
+              </>)}
             </div>
             {showAdvanced && (
               <>
-                <div className="card">
+                {!timedOut && <div className="card">
                   <h3>Guess vs target · per feature</h3>
                   <table className="tbl">
                     <thead><tr><th>Feature</th><th>Target</th><th>Guess</th><th>gap (sd)</th></tr></thead>
@@ -116,7 +121,7 @@ export function Game({ onOpenExplore }: { onOpenExplore: (stationId: string) => 
                     </tbody>
                   </table>
                   <p className="muted small">Climate distance = {fmt(result.climate_distance, 3)} (L2 norm of the gap column). Elapsed {fmt(result.elapsed_seconds, 0)}s.</p>
-                </div>
+                </div>}
                 <LocationPanel location={{ ...t, neighbors: result.neighbors }} />
               </>
             )}
@@ -133,7 +138,7 @@ export function Game({ onOpenExplore }: { onOpenExplore: (stationId: string) => 
           {phase === "result" && result && t && (
             <>
               <Marker position={[t.lat, t.lon]} icon={pin("#59a14f")} />
-              <Polyline positions={[[result.guess.lat, result.guess.lon], [t.lat, t.lon]]} pathOptions={{ color: "#fff", dashArray: "6 8", weight: 2 }} />
+              {!timedOut && <Polyline positions={[[result.guess.lat, result.guess.lon], [t.lat, t.lon]]} pathOptions={{ color: "#fff", dashArray: "6 8", weight: 2 }} />}
               {result.neighbors.map((n) => (
                 <CircleMarker key={n.neighbor_id} center={[n.lat, n.lon]} radius={5} pathOptions={{ color: CLUSTER_COLORS[n.cluster], fillOpacity: 0.8 }} />
               ))}

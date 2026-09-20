@@ -95,8 +95,8 @@ def template_clue(loc: dict) -> tuple[str, list[dict]]:
             p["frozen_precip_days_per_year"],
             "frozen precipitation is essentially unknown",
             "frozen precipitation is rare",
-            "some frozen-precipitation days each winter",
-            "frequent frozen precipitation in winter",
+            "there are some frozen-precipitation days each winter",
+            "frozen precipitation is frequent in winter",
             "frozen precipitation is a regular part of winter",
         ),
     )
