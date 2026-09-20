@@ -1,0 +1,156 @@
+{
+  "annual_mean_temp_f": {
+    "label": "Annual mean temperature",
+    "unit": "\u00b0F",
+    "fields": [
+      "ISD mandatory air temperature (pos 88-92) + QC flag (93)"
+    ],
+    "aggregation": "hourly mean -> daily mean (days with >=18 valid hours) -> mean over all valid days",
+    "missing": "days with <18 hourly temps excluded",
+    "group": "temperature"
+  },
+  "winter_mean_temp_f": {
+    "label": "Winter (DJF) mean temperature",
+    "unit": "\u00b0F",
+    "fields": [
+      "air temperature"
+    ],
+    "aggregation": "mean of valid daily means for months 12,1,2",
+    "missing": "as annual",
+    "group": "temperature"
+  },
+  "summer_mean_temp_f": {
+    "label": "Summer (JJA) mean temperature",
+    "unit": "\u00b0F",
+    "fields": [
+      "air temperature"
+    ],
+    "aggregation": "mean of valid daily means for months 6,7,8",
+    "missing": "as annual",
+    "group": "temperature"
+  },
+  "seasonal_temp_range_f": {
+    "label": "Seasonal range (summer - winter)",
+    "unit": "\u00b0F",
+    "fields": [
+      "air temperature"
+    ],
+    "aggregation": "summer_mean_temp_f - winter_mean_temp_f",
+    "missing": "derived",
+    "group": "temperature"
+  },
+  "diurnal_temp_range_f": {
+    "label": "Mean diurnal range (daily max - min)",
+    "unit": "\u00b0F",
+    "fields": [
+      "air temperature"
+    ],
+    "aggregation": "mean over valid days of (max hourly - min hourly)",
+    "missing": "as annual",
+    "group": "temperature"
+  },
+  "hot_days_per_year": {
+    "label": "Days >= 90\u00b0F per year",
+    "unit": "days/yr",
+    "fields": [
+      "air temperature"
+    ],
+    "aggregation": "count(valid days with daily max >= 32.2\u00b0C) / n_valid_days * 365.25",
+    "missing": "normalised by valid days",
+    "group": "temperature"
+  },
+  "freeze_days_per_year": {
+    "label": "Days with min <= 32\u00b0F per year",
+    "unit": "days/yr",
+    "fields": [
+      "air temperature"
+    ],
+    "aggregation": "count(valid days with daily min <= 0\u00b0C) / n_valid_days * 365.25",
+    "missing": "normalised by valid days",
+    "group": "temperature"
+  },
+  "annual_precip_in": {
+    "label": "Annual precipitation",
+    "unit": "in",
+    "fields": [
+      "ISD AA1 liquid precipitation, 1-hour period, depth (mm) + QC"
+    ],
+    "aggregation": "sum of 1-h totals per local day (0 if station operating but no report) -> sum / n_valid_days * 365.25",
+    "missing": "days with <18 temp hours -> null (not 0); ASOS reports 1-h total only when non-zero",
+    "group": "precipitation"
+  },
+  "wet_days_per_year": {
+    "label": "Wet days (>= 0.04 in) per year",
+    "unit": "days/yr",
+    "fields": [
+      "AA1 1-hour precipitation"
+    ],
+    "aggregation": "count(valid days with precip >= 1 mm) / n_valid_days * 365.25",
+    "missing": "normalised by valid days",
+    "group": "precipitation"
+  },
+  "summer_precip_fraction": {
+    "label": "Share of precipitation falling in JJA",
+    "unit": "fraction",
+    "fields": [
+      "AA1 1-hour precipitation"
+    ],
+    "aggregation": "sum(precip, months 6-8) / sum(precip, all months)",
+    "missing": "valid days only",
+    "group": "precipitation"
+  },
+  "frozen_precip_days_per_year": {
+    "label": "Frozen-precipitation days per year (proxy for snow days)",
+    "unit": "days/yr",
+    "fields": [
+      "AA1 1-hour precipitation",
+      "air temperature"
+    ],
+    "aggregation": "count(valid days with precip >= 1 mm and daily mean temp <= 0\u00b0C) / n_valid_days * 365.25",
+    "missing": "AJ1 snow depth coverage was too sparse at ASOS stations; this proxy uses temperature + precipitation only",
+    "group": "snow"
+  },
+  "summer_dewpoint_f": {
+    "label": "Summer (JJA) mean dew point",
+    "unit": "\u00b0F",
+    "fields": [
+      "ISD mandatory dew point (pos 94-98) + QC flag (99)"
+    ],
+    "aggregation": "hourly mean -> daily mean -> mean over JJA valid days",
+    "missing": "hourly nulls skipped",
+    "group": "humidity"
+  },
+  "annual_dewpoint_depression_f": {
+    "label": "Mean dew-point depression (T - Td)",
+    "unit": "\u00b0F",
+    "fields": [
+      "air temperature",
+      "dew point"
+    ],
+    "aggregation": "mean over valid days of (daily mean temp - daily mean dew point); larger = drier air",
+    "missing": "hourly nulls skipped",
+    "group": "humidity"
+  },
+  "mean_wind_mph": {
+    "label": "Mean wind speed",
+    "unit": "mph",
+    "fields": [
+      "ISD mandatory wind speed (pos 66-69, m/s*10) + QC flag (70)"
+    ],
+    "aggregation": "hourly mean -> daily mean -> mean over valid days",
+    "missing": "hourly nulls skipped; calm reported as 0",
+    "group": "wind"
+  },
+  "mean_visibility_mi": {
+    "label": "Mean visibility",
+    "unit": "mi",
+    "fields": [
+      "ISD mandatory visibility (pos 79-84, m) + QC flag (85)"
+    ],
+    "aggregation": "hourly mean -> daily mean -> mean over valid days",
+    "missing": "hourly nulls skipped",
+    "group": "other",
+    "in_model": false,
+    "note": "ASOS visibility saturates at 10 mi; excluded from clustering/similarity"
+  }
+}
