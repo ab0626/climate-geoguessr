@@ -93,6 +93,8 @@ def public_location(loc: dict) -> dict:
         "n_visibility_days": loc["n_visibility_days"],
         "n_days_with_precip_report": loc["n_days_with_precip_report"],
         "n_precip_24h_days": loc["n_precip_24h_days"],
+        "n_precip_stuck_days": loc["n_precip_stuck_days"],
+        "n_precip_implausible_days": loc["n_precip_implausible_days"],
     }
     return out
 

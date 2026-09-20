@@ -68,3 +68,12 @@ HOURLY_REPORT_TYPES = {
 MIN_OBS_PER_DAY = 18
 # Minimum valid days for a station to keep a variable in the climatology
 MIN_DAYS_FRACTION = 0.70  # of the 10-year window
+# Stuck AWOS gauge: >= this many identical non-zero "1-hour" totals of >= this depth in one day
+STUCK_GAUGE_MIN_HOURS = 6
+STUCK_GAUGE_MIN_MM = 5.0
+# Daily AA1 sum above this is treated as unknown (the CONUS 24-h record is ~1,090 mm;
+# 300 mm days are extraordinarily rare and the affected station-days are gauge noise)
+PRECIP_DAILY_MAX_MM = 300.0
+# A station with this many flagged (stuck/implausible) days has an unreliable gauge:
+# all precipitation features are nulled and it leaves the model table
+MAX_FLAGGED_PRECIP_DAYS = 5

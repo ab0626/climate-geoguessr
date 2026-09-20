@@ -17,7 +17,15 @@ import time
 
 import polars as pl
 
-from pipeline.config import DAILY_DIR, END_YEAR, MIN_DAYS_FRACTION, PROCESSED_DIR, RAW_DIR, START_YEAR
+from pipeline.config import (
+    DAILY_DIR,
+    END_YEAR,
+    MAX_FLAGGED_PRECIP_DAYS,
+    MIN_DAYS_FRACTION,
+    PROCESSED_DIR,
+    RAW_DIR,
+    START_YEAR,
+)
 
 WINDOW_DAYS = (END_YEAR - START_YEAR + 1) * 365.25
 MM_TO_IN = 1 / 25.4
@@ -89,16 +97,16 @@ FEATURE_DEFS: dict[str, dict] = {
         "label": "Annual precipitation",
         "unit": "in",
         "fields": ["ISD AA1 liquid precipitation, 1-hour period, depth (mm) + QC"],
-        "aggregation": "sum of 1-h totals per local day (0 if station operating but no report) -> sum / n_valid_days * 365.25",
-        "missing": "days with <18 temp hours -> null (not 0); ASOS reports 1-h total only when non-zero",
+        "aggregation": "sum of 1-h totals per local day (0 if station operating but no report) -> sum / n_days_with_known_precip * 365.25",
+        "missing": "days with <18 temp hours, stuck-gauge days (>=6 identical non-zero 1-h totals >=5 mm) and days >300 mm -> null (not 0); stations with >=5 flagged days have no trusted gauge",
         "group": "precipitation",
     },
     "wet_days_per_year": {
         "label": "Wet days (>= 0.04 in) per year",
         "unit": "days/yr",
         "fields": ["AA1 1-hour precipitation"],
-        "aggregation": "count(valid days with precip >= 1 mm) / n_valid_days * 365.25",
-        "missing": "normalised by valid days",
+        "aggregation": "count(days with known precip >= 1 mm) / n_days_with_known_precip * 365.25",
+        "missing": "normalised by days with known precipitation",
         "group": "precipitation",
     },
     "summer_precip_fraction": {
@@ -113,7 +121,7 @@ FEATURE_DEFS: dict[str, dict] = {
         "label": "Frozen-precipitation days per year (proxy for snow days)",
         "unit": "days/yr",
         "fields": ["AA1 1-hour precipitation", "air temperature"],
-        "aggregation": "count(valid days with precip >= 1 mm and daily mean temp <= 0°C) / n_valid_days * 365.25",
+        "aggregation": "count(days with known precip >= 1 mm and daily mean temp <= 0°C) / n_days_with_known_precip * 365.25",
         "missing": "AJ1 snow depth coverage was too sparse at ASOS stations; this proxy uses temperature + precipitation only",
         "group": "snow",
     },
@@ -182,6 +190,7 @@ def build_station_features(daily: pl.DataFrame) -> pl.DataFrame:
     v = pl.col("valid_day")
     valid_cnt = v.sum()
     per_year = 365.25 / valid_cnt
+    precip_per_year = 365.25 / pl.col("precip_mm").count()
 
     feats = d.group_by("station_id").agg(
         pl.len().alias("n_days_with_data"),
@@ -199,6 +208,8 @@ def build_station_features(daily: pl.DataFrame) -> pl.DataFrame:
         pl.col("snow_depth_max_cm").filter(v).count().alias("n_snow_depth_days"),
         (pl.col("n_precip_1h_reports") > 0).filter(v).sum().alias("n_days_with_precip_report"),
         pl.col("precip_24h_mm").filter(v).count().alias("n_precip_24h_days"),
+        pl.col("precip_stuck_gauge").filter(v).sum().alias("n_precip_stuck_days"),
+        pl.col("precip_implausible").filter(v).sum().alias("n_precip_implausible_days"),
         # temperature
         c_to_f(pl.col("temp_mean_c").mean()).alias("annual_mean_temp_f"),
         c_to_f(pl.col("temp_mean_c").filter(pl.col("is_winter")).mean()).alias("winter_mean_temp_f"),
@@ -207,12 +218,12 @@ def build_station_features(daily: pl.DataFrame) -> pl.DataFrame:
         ((pl.col("temp_max_c") >= 32.2).sum() * per_year).alias("hot_days_per_year"),
         ((pl.col("temp_min_c") <= 0.0).sum() * per_year).alias("freeze_days_per_year"),
         # precipitation
-        (pl.col("precip_mm").sum() * per_year * MM_TO_IN).alias("annual_precip_in"),
-        ((pl.col("precip_mm") >= 1.0).sum() * per_year).alias("wet_days_per_year"),
+        (pl.col("precip_mm").sum() * precip_per_year * MM_TO_IN).alias("annual_precip_in"),
+        ((pl.col("precip_mm") >= 1.0).sum() * precip_per_year).alias("wet_days_per_year"),
         (pl.col("precip_mm").filter(pl.col("is_summer")).sum() / pl.col("precip_mm").sum()).alias(
             "summer_precip_fraction"
         ),
-        (((pl.col("precip_mm") >= 1.0) & (pl.col("temp_mean_c") <= 0.0)).sum() * per_year).alias(
+        (((pl.col("precip_mm") >= 1.0) & (pl.col("temp_mean_c") <= 0.0)).sum() * precip_per_year).alias(
             "frozen_precip_days_per_year"
         ),
         # humidity
@@ -228,11 +239,18 @@ def build_station_features(daily: pl.DataFrame) -> pl.DataFrame:
         (pl.col("snow_depth_max_cm").filter(v).mean()).alias("mean_snow_depth_cm"),
     )
     # A station whose AA1 section essentially never appears has no reporting
-    # precipitation gauge; its "0 in/yr" is absence of data, not a desert.
-    has_gauge = pl.col("n_days_with_precip_report") >= MIN_PRECIP_REPORT_FRACTION * pl.col("n_valid_days")
+    # precipitation gauge; its "0 in/yr" is absence of data, not a desert. A
+    # station with repeated stuck/implausible days has a gauge that cannot be
+    # trusted even on the days that pass the daily checks.
+    n_flagged = pl.col("n_precip_stuck_days") + pl.col("n_precip_implausible_days")
+    has_gauge = (
+        pl.col("n_days_with_precip_report") >= MIN_PRECIP_REPORT_FRACTION * pl.col("n_valid_days")
+    ) & (n_flagged < MAX_FLAGGED_PRECIP_DAYS)
     feats = feats.with_columns(
         (pl.col("summer_mean_temp_f") - pl.col("winter_mean_temp_f")).alias("seasonal_temp_range_f"),
         (pl.col("n_valid_days") / WINDOW_DAYS).alias("valid_day_fraction"),
+        n_flagged.alias("n_precip_flagged_days"),
+        (n_flagged >= MAX_FLAGGED_PRECIP_DAYS).alias("precip_gauge_unreliable"),
         has_gauge.alias("has_precip_gauge"),
         *[pl.when(has_gauge).then(pl.col(c)).otherwise(None).alias(c) for c in PRECIP_FEATURES],
     )
@@ -261,6 +279,9 @@ def main() -> None:
         "stations_kept": keep.height,
         "stations_dropped_low_coverage": all_stations.height - enough_days.height,
         "stations_dropped_missing_feature": enough_days.height - keep.height,
+        "stations_precip_gauge_unreliable": int(enough_days["precip_gauge_unreliable"].sum()),
+        "station_days_precip_stuck_gauge": int(all_stations["n_precip_stuck_days"].sum()),
+        "station_days_precip_implausible": int(all_stations["n_precip_implausible_days"].sum()),
         "stations_missing_each_feature": {k: v for k, v in missing_feature_counts.items() if v},
         "min_valid_day_fraction": MIN_DAYS_FRACTION,
         "window_days": WINDOW_DAYS,

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { CircleMarker, MapContainer, Polyline, TileLayer, Tooltip } from "react-leaflet";
 import { CartesianGrid, ResponsiveContainer, Scatter, ScatterChart, Tooltip as RTooltip, XAxis, YAxis, ZAxis } from "recharts";
-import { api, CLUSTER_COLORS, fmt, fmtBytes, fmtInt, type Cluster, type Diagnostics, type Location, type MapLocation, type Pipeline } from "./api";
+import { api, CLUSTER_COLORS, fmt, fmtBytes, fmtInt, ordinal, type Cluster, type Diagnostics, type Location, type MapLocation, type Pipeline } from "./api";
 import { LocationPanel } from "./LocationPanel";
 
 const US_CENTER: [number, number] = [38.5, -96.5];
@@ -313,7 +313,7 @@ function Queries({ defs }: { defs: Record<string, any> }) {
       <div className="grid2">
         <div className="card"><h3>Which regions have unusually high/low values?</h3>
           <div className="row gap"><select value={f} onChange={(e) => setF(e.target.value)}>{feats.map((k) => <option key={k} value={k}>{defs[k].label}</option>)}</select><select value={dir} onChange={(e) => setDir(e.target.value as any)}><option value="high">highest</option><option value="low">lowest</option></select></div>
-          <table className="tbl"><tbody>{ext.map((r) => <tr key={r.station_id}><td><span className="dot" style={{ background: CLUSTER_COLORS[r.cluster] }} />{r.name}, {r.state}</td><td>{fmt(r[f], 1)} {defs[f].unit}</td><td className="muted small">{fmt(r[`pct_${f}`], 0)}th pct</td></tr>)}</tbody></table>
+          <table className="tbl"><tbody>{ext.map((r) => <tr key={r.station_id}><td><span className="dot" style={{ background: CLUSTER_COLORS[r.cluster] }} />{r.name}, {r.state}</td><td>{fmt(r[f], 1)} {defs[f].unit}</td><td className="muted small">{ordinal(r[`pct_${f}`])} pct</td></tr>)}</tbody></table>
         </div>
         <div className="card"><h3>Climate twins: similar climate, far apart</h3>
           <p className="muted small">Nearest-neighbour pairs ≥ 1,000 miles apart, ranked by climate distance. Demonstrates that similarity is a property of the fingerprint, not geography.</p>

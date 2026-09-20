@@ -28,7 +28,7 @@ entry next to every value. Summary:
 | diurnal_temp_range_f | temp | mean of (daily max − daily min) |
 | hot_days_per_year | temp | days with max ≥ 90 °F (32.2 °C) ÷ valid days × 365.25 |
 | freeze_days_per_year | temp | days with min ≤ 32 °F ÷ valid days × 365.25 |
-| annual_precip_in | AA1 1-h | Σ daily precip ÷ valid days × 365.25 |
+| annual_precip_in | AA1 1-h | Σ daily precip ÷ days with known precip × 365.25 |
 | wet_days_per_year | AA1 1-h | days ≥ 1 mm (0.04 in), annualised |
 | summer_precip_fraction | AA1 1-h | JJA precip ÷ annual precip |
 | frozen_precip_days_per_year | AA1 1-h + temp | days with ≥ 1 mm and mean T ≤ 0 °C, annualised |
@@ -48,6 +48,12 @@ Missing-value rules that matter:
   when dry) — *unless* the station reports AA1 on < 2 % of its valid days, in
   which case it has no gauge and all four precipitation features are null and
   the station is excluded from the model table.
+* Daily precipitation plausibility (LIMITATIONS.md → Precipitation): a valid
+  day whose non-zero 1-h totals are all identical, ≥ 6 in number and ≥ 5 mm is
+  a **stuck gauge**; a day summing to > 300 mm is **implausible**. Both get
+  null (unknown) precipitation and leave the precipitation denominators. A
+  station with ≥ 5 such days has no trusted gauge: precipitation features are
+  null and it is excluded from the model table like a no-gauge station.
 * Stations missing any model feature are excluded rather than imputed.
 
 ## Clustering (`clustering/run.py`)
@@ -74,7 +80,7 @@ z-score has the largest magnitude, rendered as "high/low <label> (±x sd)".
 ## Similarity and neighbours (`backend/store.py`)
 
 * Climate distance = Euclidean distance between two stations' z-vectors.
-* Similarity % = share of all 1,846 × 1,845 / 2 station pairs whose distance is
+* Similarity % = share of all 1,827 × 1,826 / 2 station pairs whose distance is
   **larger** than this pair's (via `searchsorted` on the stored sorted pairwise
   distances). 100 % = the two most similar stations in the table.
 * Nearest climate neighbours: 10 smallest distances, precomputed.
@@ -96,7 +102,7 @@ absorbs click imprecision at continental zoom.
 
 Deterministic: each of temperature (summer & winter), humidity, precipitation,
 seasonality, snow proxy, wind and diurnal range is mapped to a phrase by the
-station's **percentile rank** within the 1,846-station table (bands at 15/35/65/85).
+station's **percentile rank** within the 1,827-station table (bands at 15/35/65/85).
 The list of (feature, value, percentile) facts used is returned with the clue and
 shown after the reveal as "Signal found".
 

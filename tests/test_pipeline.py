@@ -118,6 +118,38 @@ def test_daily_requires_min_obs(tmp_path):
     assert not daily2["valid_day"][0]
 
 
+def test_daily_precip_stuck_gauge(tmp_path):
+    # AA1 1-h total 45.7 mm repeated every hour -> stuck gauge, precip unknown
+    stuck = [isd_line(h, tail="ADDAA101045791") for h in range(6, 24)] + [
+        isd_line(h, day=16, tail="ADDAA101045791") for h in range(0, 6)
+    ]
+    clean_df, _ = clean(parse_file(write_gz(tmp_path / "stuck.gz", stuck)))
+    daily = hourly_to_daily(clean_df)
+    assert daily["valid_day"][0]
+    assert daily["precip_stuck_gauge"][0]
+    assert daily["precip_mm"][0] is None
+
+    # Same depth reported in only 3 hours (a real storm) is kept and summed
+    real = [isd_line(h, tail="ADDAA101045791" if h in (12, 13, 14) else "") for h in range(6, 24)] + [
+        isd_line(h, day=16) for h in range(0, 6)
+    ]
+    clean2, _ = clean(parse_file(write_gz(tmp_path / "real.gz", real)))
+    daily2 = hourly_to_daily(clean2)
+    assert not daily2["precip_stuck_gauge"][0]
+    assert abs(daily2["precip_mm"][0] - 3 * 45.7) < 1e-6
+
+    # Varying 60-150 mm "hourly" totals summing past 300 mm/day -> implausible, unknown
+    amounts = ["0606", "1232", "1448", "0993"]  # 60.6, 123.2, 144.8, 99.3 mm
+    noisy = [
+        isd_line(h, tail=f"ADDAA101{amounts[h - 12]}91" if 12 <= h < 16 else "") for h in range(6, 24)
+    ] + [isd_line(h, day=16) for h in range(0, 6)]
+    clean3, _ = clean(parse_file(write_gz(tmp_path / "noisy.gz", noisy)))
+    daily3 = hourly_to_daily(clean3)
+    assert not daily3["precip_stuck_gauge"][0]
+    assert daily3["precip_implausible"][0]
+    assert daily3["precip_mm"][0] is None
+
+
 def test_scoring():
     assert score_for_distance(0) == MAX_SCORE
     assert score_for_distance(15) == MAX_SCORE
